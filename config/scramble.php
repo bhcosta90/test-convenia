@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 
 return [
@@ -133,4 +135,25 @@ return [
     ],
 
     'extensions' => [],
+
+    'securitySchemes' => [
+        // Usado na maioria das rotas
+        'accessToken' => [
+            'type' => 'http',
+            'scheme' => 'bearer',
+            'bearerFormat' => 'JWT',
+            'description' => 'Token de acesso (access_token)',
+        ],
+
+        // Usado apenas para refresh de token
+        'refreshToken' => [
+            'type' => 'http',
+            'scheme' => 'bearer',
+            'bearerFormat' => 'JWT',
+            'description' => 'Token de atualização (refresh_token)',
+        ],
+    ],
+    'defaultSecurity' => [
+        ['accessToken' => []],
+    ],
 ];
