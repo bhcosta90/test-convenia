@@ -144,3 +144,25 @@ it('logs out successfully with bearer token (integration)', function (): void {
             'message' => __('Logout successful.'),
         ]);
 });
+
+it('returns 500 when unable to create tokens on login (JWTException path)', function (): void {
+    // Ensure valid user exists
+    ($this->createUser)();
+
+    // Switch to asymmetric algorithm without providing keys to force encode failure
+    config([
+        'jwt.algo' => 'RS256',
+        'jwt.keys' => [
+            'public' => null,
+            'private' => null,
+            'passphrase' => null,
+        ],
+    ]);
+
+    $response = ($this->login)('john@example.com', 'secret', 'Web');
+
+    $response->assertStatus(500)
+        ->assertJson([
+            'message' => __('Unable to create tokens.'),
+        ]);
+});
