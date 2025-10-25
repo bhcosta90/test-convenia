@@ -110,3 +110,56 @@ it('when there are no histories for batch, attaches CSV with only header', funct
     // Only header and trailing newline
     expect($csvNoBom)->toBe("name;email;cpf;city;state;errors\n");
 });
+
+it('handles non-array payloads, missing errors, and JSON-encodes complex values', function (): void {
+    // History 1: non-array top-level data, no errors key
+    $this->user->batch()->create([
+        'type' => BatchEnum::EMPLOYEE_BULK_STORE,
+        'batch_id' => $this->batchId,
+        'data' => 'not-an-array',
+    ]);
+
+    // History 2: associative payload with complex values + array errors
+    $this->user->batch()->create([
+        'type' => BatchEnum::EMPLOYEE_BULK_STORE,
+        'batch_id' => $this->batchId,
+        'data' => [
+            'data' => [
+                'name' => ['nested'],                 // array -> JSON
+                'email' => (object) ['data' => 1],       // object -> JSON
+                'cpf' => 123,                          // scalar -> string
+                'city' => null,                        // null -> empty
+                'state' => ['a' => 'b'],               // assoc array -> JSON
+            ],
+            'errors' => ['x'],
+        ],
+    ]);
+
+    $notification = new UploadFilePartialNotification($this->batchId);
+    $mail = $notification->toMail($this->user);
+
+    $attachment = $mail->rawAttachments[0];
+    $csv = $attachment['data'];
+
+    expect(str_starts_with($csv, "\xEF\xBB\xBF"))->toBeTrue();
+    $csvNoBom = mb_substr($csv, 1);
+
+    $normalized = mb_rtrim($csvNoBom, "\r\n");
+    $lines = array_values(array_filter(preg_split("/\r\n|\n|\r/", $normalized)));
+
+    // Expect header + two rows
+    expect(count($lines))->toBe(3)
+        ->and($lines[0])->toBe('name;email;cpf;city;state;errors');
+
+    // Parse rows via CSV to decode quotes properly
+    $row1 = str_getcsv($lines[1], ';');
+    $row2 = str_getcsv($lines[2], ';');
+
+    expect($row1)->toBe(['', '', '', '', '', ''])
+        ->and($row2[0])->toBe('["nested"]')
+        ->and($row2[1])->toBe('{"data":1}')
+        ->and($row2[2])->toBe('123')
+        ->and($row2[3])->toBe('')
+        ->and($row2[4])->toBe('{"a":"b"}')
+        ->and($row2[5])->toBe('x');
+});
