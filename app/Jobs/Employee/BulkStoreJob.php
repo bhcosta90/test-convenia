@@ -29,36 +29,32 @@ final class BulkStoreJob implements ShouldQueue
             return;
         }
 
-        $lines = LazyCollection::make(function () {
-            $handle = fopen(Storage::path($this->file), 'r');
+        $filePath = Storage::path($this->file);
+
+        $lines = LazyCollection::make(function () use ($filePath) {
+            $handle = fopen($filePath, 'r');
             if (! $handle) {
                 return;
             }
 
-            $firstLine = fgets($handle); // lê header apenas para detectar delimitador
-            if (! $firstLine) {
-                return;
-            }
+            // lê header com escape
+            $header = fgetcsv($handle, 0, ';', '"', '\\');
+            $delimiter = str_contains(implode(',', $header), ';') ? ';' : ',';
 
-            // Detecta delimitador
-            $delimiter = str_contains($firstLine, ';') ? ';' : ',';
-
-            // NÃO yield o header
-            while (($line = fgets($handle)) !== false) {
-                $line = mb_trim($line);
-                if ($line === '') {
+            while (($row = fgetcsv($handle, 0, $delimiter, '"', '\\')) !== false) {
+                $row = array_map('trim', $row);
+                if (empty(array_filter($row))) {
                     continue;
                 }
-
-                yield str_getcsv($line, $delimiter, '"', '\\');
+                yield $row;
             }
 
             fclose($handle);
         });
 
         $lines->chunk(50)->each(function (LazyCollection $chunk) {
-            $jobs = $chunk->map(fn ($line) => new RegisterEmployeeJob($this->userId, $line))->all();
-            $this->batch()->add($jobs);
+            $jobs = $chunk->map(fn ($line) => new RegisterEmployeeJob($this->userId, $line));
+            $this->batch()->add($jobs); // sem ->all()
         });
 
         Storage::delete($this->file);
