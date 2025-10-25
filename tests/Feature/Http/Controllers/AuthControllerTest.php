@@ -3,9 +3,6 @@
 declare(strict_types=1);
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Deterministic TTL so we can assert expires_in
@@ -32,7 +29,7 @@ beforeEach(function (): void {
 
     $this->refresh = function (string $token) {
         return $this->postJson('/api/auth/refresh', [
-            'token' => $token,
+            'refresh_token' => $token,
         ]);
     };
 

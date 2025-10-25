@@ -12,6 +12,9 @@ use Tymon\JWTAuth\Facades\JWTFactory;
 
 final class AuthController
 {
+    /**
+     * @unauthenticated
+     */
     public function login(Auth\LoginRequest $request): JsonResponse
     {
         $credentials = $request->only(['email', 'password']);
@@ -47,13 +50,16 @@ final class AuthController
         return $this->respondWithTokens($accessToken, $expiredToken, $refreshToken, $expiredRefreshToken);
     }
 
+    /**
+     * @unauthenticated
+     */
     public function refresh(Auth\RefreshRequest $request): JsonResponse
     {
         try {
             $expiredToken = $this->accessTokenTtlSeconds();
             $expiredRefreshToken = $this->refreshTokenTtlSeconds();
 
-            $payload = JWTAuth::setToken($request->token)->getPayload();
+            $payload = JWTAuth::setToken($request->refresh_token)->getPayload();
 
             if ($payload->get('type') !== 'refresh') {
                 return response()->json([
@@ -66,7 +72,7 @@ final class AuthController
                 'type' => 'access',
             ];
 
-            $user = JWTAuth::claims($claims)->setToken($request->token)->toUser();
+            $user = JWTAuth::claims($claims)->setToken($request->refresh_token)->toUser();
 
             // Create new access token
             $accessToken = JWTAuth::fromUser($user);
@@ -74,7 +80,7 @@ final class AuthController
             $refreshToken = $this->makeRefreshToken([
                 'type' => 'refresh',
             ], $expiredRefreshToken);
-        } catch (JWTException) {
+        } catch (JWTException $e) {
             return response()->json([
                 'message' => __('Invalid or expired refresh token.'),
             ], 401);

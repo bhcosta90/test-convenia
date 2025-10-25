@@ -1,61 +1,188 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Employee Registration API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel-based REST API focused on employee ("employee") registration and management. Each employee belongs to a specific user, and employee data is only accessible to the authenticated owner. The application also supports CSV bulk import: an authenticated user uploads a CSV file; the system processes it asynchronously and sends an email indicating success or failure. In case of failures, the email includes a CSV attachment listing the records that failed.
 
-## About Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Table of Contents
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Running the App](#running-the-app)
+- [Seeding a User](#seeding-a-user)
+- [Authentication](#authentication)
+- [API Documentation](#api-documentation)
+- [CSV Import Workflow](#csv-import-workflow)
+- [Emails & Queues](#emails--queues)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+- [Project Structure (Short)](#project-structure-short)
+- [Tech Stack](#tech-stack)
+- [License](#license)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Features
+- Employee registration and CRUD.
+- Per-user data isolation: only the logged-in user can access their employees.
+- CSV bulk import for employees, initiated by the authenticated user.
+- Post-processing email notification with overall status.
+  - On errors, an additional CSV attachment with failed rows is sent.
+- Modern Laravel 12.x foundation with Pest tests.
 
-## Learning Laravel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Prerequisites
+- PHP 8.3+
+- Composer 2.x
+- Node.js 18+ (for asset build)
+- A database supported by Laravel (SQLite/MySQL/PostgreSQL). SQLite is sufficient for local dev.
+- Mail service credentials (for sending notifications) — can be a local mail catcher in development.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation
+Run the following commands from the project root:
 
-## Laravel Sponsors
+1. Install PHP dependencies:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+   ```bash
+   composer install
+   ```
 
-### Premium Partners
+2. Run project setup (env, key, migrations, frontend build):
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+   ```bash
+   composer run setup
+   ```
 
-## Contributing
+This will:
+- Create a `.env` (if missing) from `.env.example`.
+- Generate the application key.
+- Run database migrations.
+- Install Node dependencies and build assets.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-## Code of Conduct
+## Configuration
+- Environment variables live in `.env`.
+- Ensure the following are set correctly for your environment:
+  - `APP_URL`
+  - `DB_*` (database connection)
+  - `MAIL_*` (mail transport for notifications)
+  - Queue connection: `QUEUE_CONNECTION=database` (or another of your choice)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+If you are using SQLite locally, a starter file may be created automatically. Confirm the path in `DB_DATABASE` points to an existing file (e.g., `database/database.sqlite`).
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Running the App
+For a convenient local dev experience (HTTP server, queue listener, logs, and Vite), use the provided Composer script:
+
+```bash
+composer run dev
+```
+
+Alternatively, you can run components separately:
+- App server: `php artisan serve`
+- Queue listener: `php artisan queue:listen --tries=1`
+- Logs: `php artisan pail --timeout=0`
+- Vite dev: `npm run dev`
+
+
+## Seeding a User
+To create an initial user via database seeders, run:
+
+```bash
+php artisan db:seed
+```
+
+This will insert example data (including at least one user) so you can authenticate and start using the API.
+
+
+## Authentication
+This project uses token-based authentication. Obtain a token via the authentication endpoints and include it in subsequent requests.
+
+- Send the token using an `Authorization: Bearer <token>` header.
+- Access to employee resources is always scoped to the authenticated user.
+
+Check the Postman collection for exact auth endpoints and payloads.
+
+
+## API Documentation
+- Swagger UI (OpenAPI) is available at:
+
+  ```
+  /api/docs
+  ```
+
+  When running locally with `php artisan serve`, access it at `http://127.0.0.1:8000/api/docs`. Use it to explore endpoints and run tests interactively.
+
+- A Postman collection is also provided under:
+
+  ```
+  storage/docs
+  ```
+
+- Import the collection in Postman to explore and execute requests.
+- Endpoints cover authentication, employee management, and CSV bulk import.
+
+
+## CSV Import Workflow
+1. The authenticated user uploads a CSV file with employee data.
+2. The file is queued for background processing.
+3. When processing finishes:
+   - If all rows succeed, the user receives a success email.
+   - If any rows fail, the user receives a failure email with a CSV attachment listing all failed rows and reasons.
+
+CSV tips:
+- Ensure header names and formats match what the API expects (see Postman examples for reference).
+- Use UTF-8 encoding and a comma `,` as the delimiter unless otherwise specified.
+
+
+## Emails & Queues
+- Import processing and notification delivery run via Laravel queues.
+- Make sure a queue worker is running in development and production:
+
+  ```bash
+  php artisan queue:listen --tries=1
+  ```
+
+- Configure your mail transport in `.env` (`MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, etc.).
+
+
+## Testing
+Run the test suite with Composer:
+
+```bash
+composer test
+```
+
+This will clear config cache and run the test suite (Pest).
+
+
+## Troubleshooting
+- Migrations fail
+  - Check your database credentials in `.env` and that the database exists.
+- Emails not sending
+  - Verify `MAIL_*` env variables and try a local mail catcher.
+- Queue jobs not processing
+  - Ensure the queue worker is running and `QUEUE_CONNECTION` is set.
+- Auth errors
+  - Confirm you’re including the `Authorization: Bearer <token>` header.
+
+
+## Project Structure (Short)
+- `app/` — Application code (controllers, jobs, models, etc.)
+- `routes/` — API routes
+- `database/` — Migrations, factories, seeders
+- `storage/docs/` — Postman collection and docs
+- `storage/fixtures/` — Example CSV fixtures (e.g., `employees.csv`)
+- `tests/` — Test suite (Pest)
+
+
+## Tech Stack
+- Laravel 12.x
+- PHP 8.3
+- Pest for testing
+- JWT-style token auth
+- Queued jobs for CSV processing and email notifications
+
 
 ## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is licensed under the MIT License. See the `LICENSE` file if present.
