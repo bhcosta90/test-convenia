@@ -46,29 +46,40 @@ final class UploadFilePartialNotification extends Notification
 
     private function buildCsvFromBatchErrors(array $errors): string
     {
-        // Normalize records and collect all keys from 'data' while preparing an 'error' field
+        // We expect each $item to be something like: ['data' => [...], 'errors' => [...]]
+        // Goal: Expand 'data' into multiple columns and place 'error' as the last column.
         $rows = [];
-        $allKeys = [];
+        $dataKeys = [];
 
         foreach ($errors as $item) {
-            // Each $item is expected to be an associative array; 'errors' may be an array or string.
-            $data = is_array($item) ? $item : [];
+            $item = is_array($item) ? $item : [];
+            $payload = $item['data'] ?? [];
 
             $row = [];
-            foreach ($data as $key => $value) {
-                if ($key === 'errors') {
-                    // normalize later into 'error' column
-                    continue;
+
+            // Expand 'data' into columns
+            if (is_array($payload)) {
+                $isList = array_keys($payload) === range(0, count($payload) - 1);
+                if ($isList) {
+                    // Numeric array: name columns as data_1..data_N
+                    foreach ($payload as $idx => $value) {
+                        $col = 'data_'.($idx + 1);
+                        $dataKeys[$col] = true;
+                        $row[$col] = $value;
+                    }
+                } else {
+                    // Associative array: use actual keys
+                    foreach ($payload as $key => $value) {
+                        $dataKeys[$key] = true;
+                        $row[$key] = $value;
+                    }
                 }
-                $allKeys[$key] = true;
-                $row[$key] = $value;
             }
 
-            // Build the 'error' column as a semicolon-joined list
+            // Build a single 'error' text joining messages by ';'
             $err = '';
-            if (isset($data['errors'])) {
-                if (is_array($data['errors'])) {
-                    // Flatten potential nested arrays to strings
+            if (array_key_exists('errors', $item)) {
+                if (is_array($item['errors'])) {
                     $flat = [];
                     $iterator = function ($v) use (&$flat, &$iterator) {
                         if (is_array($v)) {
@@ -76,13 +87,16 @@ final class UploadFilePartialNotification extends Notification
                                 $iterator($vv);
                             }
                         } else {
-                            $flat[] = (string) $v;
+                            $v = (string) $v;
+                            if ($v !== '') {
+                                $flat[] = $v;
+                            }
                         }
                     };
-                    $iterator($data['errors']);
-                    $err = implode(';', array_filter($flat, fn ($s) => $s !== ''));
+                    $iterator($item['errors']);
+                    $err = implode(';', $flat);
                 } else {
-                    $err = (string) $data['errors'];
+                    $err = (string) $item['errors'];
                 }
             }
             $row['error'] = $err;
@@ -90,26 +104,27 @@ final class UploadFilePartialNotification extends Notification
             $rows[] = $row;
         }
 
-        // Ensure 'error' is part of headers and placed at the end
-        $allKeys['error'] = true;
-        $headers = array_keys($allKeys);
+        // Finalize headers: all data keys first, then 'error'
+        $headers = array_keys($dataKeys);
+        $headers[] = 'error';
 
-        // Build CSV string
+        // Build CSV with UTF-8 BOM and semicolon delimiter for better Excel compatibility
         $out = fopen('php://temp', 'r+');
-        // Write header
-        fputcsv($out, $headers);
-        // Write rows
+        // Write BOM
+        fwrite($out, "\xEF\xBB\xBF");
+        // Header
+        fputcsv($out, $headers, ';', '"', '\\');
+        // Rows
         foreach ($rows as $row) {
             $ordered = [];
             foreach ($headers as $h) {
                 $val = $row[$h] ?? '';
-                // Normalize arrays/objects as JSON strings
                 if (is_array($val) || is_object($val)) {
                     $val = json_encode($val, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
                 $ordered[] = (string) $val;
             }
-            fputcsv($out, $ordered);
+            fputcsv($out, $ordered, ';', '"', '\\');
         }
         rewind($out);
         $csv = stream_get_contents($out) ?: '';
