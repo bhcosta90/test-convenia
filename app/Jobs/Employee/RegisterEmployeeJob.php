@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\Employee;
 
+use App\Enums\BatchEnum;
 use App\Http\Validation\EmployeeValidation;
 use App\Models\User;
 use Illuminate\Bus\Batchable;
@@ -55,6 +56,7 @@ final class RegisterEmployeeJob implements ShouldQueue
         } catch (ValidationException $e) {
             $user = User::findOrFail($this->userId);
             $user->batch()->create([
+                'type' => BatchEnum::EMPLOYEE_BULK_STORE,
                 'batch_id' => $this->batch()->id,
                 'data' => [
                     'error' => $e->errors(),
