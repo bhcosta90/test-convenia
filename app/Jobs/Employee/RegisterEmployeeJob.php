@@ -13,7 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Validator;
-use Throwable;
+use Illuminate\Validation\ValidationException;
 
 final class RegisterEmployeeJob implements ShouldQueue
 {
@@ -38,12 +38,29 @@ final class RegisterEmployeeJob implements ShouldQueue
             'user' => $user,
         ]);
 
-        $data = Validator::make(compact('name', 'email', 'cpf', 'city', 'state'), $validation->make())
-            ->validate();
-    }
+        $employByEmail = $user->employees()->where('email', $email)->first();
+        $employByCpf = $user->employees()->where('cpf', $cpf)->first();
 
-    public function failed(Throwable $exception): void
-    {
-        dd($this->data);
+        try {
+            if ($employByEmail?->id !== $employByCpf?->id) {
+                throw ValidationException::withMessages([
+                    'email_or_cpf' => ['CPF and E-mail conflict for different employees.'],
+                ]);
+            }
+
+            $data = Validator::make(compact('name', 'email', 'cpf', 'city', 'state'), $validation->make($employByEmail?->id ?: $employByCpf?->id))
+                ->validate();
+
+            $user->employees()->updateOrCreate(compact('cpf', 'email'), $data);
+        } catch (ValidationException $e) {
+            $user = User::findOrFail($this->userId);
+            $user->batch()->create([
+                'batch_id' => $this->batch()->id,
+                'data' => [
+                    'error' => $e->errors(),
+                    'data' => $this->data,
+                ],
+            ]);
+        }
     }
 }
