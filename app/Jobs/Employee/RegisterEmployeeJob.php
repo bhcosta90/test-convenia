@@ -21,8 +21,8 @@ final class RegisterEmployeeJob implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        private int $userId,
-        private array $data
+        private readonly int $userId,
+        private readonly array $data
     ) {}
 
     public function handle(): void
