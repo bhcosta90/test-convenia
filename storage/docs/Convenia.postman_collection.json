@@ -221,6 +221,47 @@
 					"response": []
 				},
 				{
+					"name": "(show)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/api/employees/:id",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"employees",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "(store)",
 					"request": {
 						"auth": {
@@ -310,9 +351,8 @@
 							"urlencoded": [
 								{
 									"key": "name",
-									"value": "Bruno Costa",
-									"type": "text",
-									"disabled": true
+									"value": "Bruno Henrique da Costa",
+									"type": "text"
 								},
 								{
 									"key": "email",
@@ -341,14 +381,14 @@
 							]
 						},
 						"url": {
-							"raw": "{{host}}/api/employees/2",
+							"raw": "{{host}}/api/employees/209",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
 								"employees",
-								"2"
+								"209"
 							]
 						}
 					},
