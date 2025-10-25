@@ -8,25 +8,35 @@ use App\Http\Requests;
 use App\Http\Resources\EmployeeResource;
 use App\Models\Employee;
 use App\Models\User;
+use App\Support\Cache\EmployeeListCache;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 
 final class EmployeeController
 {
     use AuthorizesRequests;
 
-    public function index(#[CurrentUser] User $user): AnonymousResourceCollection
+    public function index(#[CurrentUser] User $user): JsonResponse
     {
         $this->authorize('viewAny', Employee::class);
 
-        $employees = $user->employees()
-            ->orderBy('name')
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate();
+        $page = (int) request()->query('page', 1);
 
-        return EmployeeResource::collection($employees);
+        $payload = EmployeeListCache::remember($user->id, $page, function () use ($user) {
+            $employees = $user->employees()
+                ->orderBy('name')
+                ->orderBy('created_at', 'desc')
+                ->toBase()
+                ->simplePaginate();
+
+            return EmployeeResource::collection($employees)
+                ->response()
+                ->getData(true);
+        });
+
+        return response()->json($payload);
     }
 
     public function store(Requests\EmployeeRequest $request): EmployeeResource
@@ -52,12 +62,12 @@ final class EmployeeController
         return new EmployeeResource($employee);
     }
 
-    public function destroy(Employee $employee): JsonResponse
+    public function destroy(Employee $employee): Response
     {
         $this->authorize('delete', $employee);
 
         $employee->delete();
 
-        return response()->json();
+        return response()->noContent();
     }
 }
