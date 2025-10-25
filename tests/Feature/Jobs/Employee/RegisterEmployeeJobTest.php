@@ -7,10 +7,7 @@ use App\Jobs\Employee\RegisterEmployeeJob;
 use App\Models\BatchHistory;
 use App\Models\Employee;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
-
-uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Helper: create a real batch and attach to the job

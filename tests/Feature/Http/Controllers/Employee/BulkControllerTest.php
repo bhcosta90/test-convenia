@@ -5,13 +5,10 @@ declare(strict_types=1);
 use App\Enums\BatchEnum;
 use App\Jobs\Employee\BulkStoreJob;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-
-uses(RefreshDatabase::class);
 
 // -------------------------------------
 // Helper utilities for this test suite

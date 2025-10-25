@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 use App\Models\User;
 use App\Notifications\User\UploadFileSuccessNotification;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     $this->user = User::factory()->create();

@@ -5,10 +5,7 @@ declare(strict_types=1);
 use App\Enums\BatchEnum;
 use App\Models\User;
 use App\Notifications\User\UploadFilePartialNotification;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
-
-uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     $this->user = User::factory()->create();

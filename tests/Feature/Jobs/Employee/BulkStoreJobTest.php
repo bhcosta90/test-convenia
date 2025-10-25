@@ -3,12 +3,9 @@
 declare(strict_types=1);
 
 use App\Jobs\Employee\BulkStoreJob;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-
-uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Use the real database queue so jobs are actually persisted (no fakes)
