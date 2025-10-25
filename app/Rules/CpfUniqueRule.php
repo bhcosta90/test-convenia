@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Rules;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 final class CpfUniqueRule implements ValidationRule
 {
     public function __construct(
+        private readonly User $user,
         private string|Model $table,
         private readonly ?int $ignoreId = null, // opcional para updates
     ) {}
@@ -31,7 +33,7 @@ final class CpfUniqueRule implements ValidationRule
         }
 
         // Faz a query no banco
-        $query = DB::table($this->table)->where('cpf', $cpf);
+        $query = DB::table($this->table)->where('user_id', $this->user->id)->where('cpf', $cpf);
 
         // Ignora um ID (em updates)
         if ($this->ignoreId) {
