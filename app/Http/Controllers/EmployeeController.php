@@ -9,7 +9,7 @@ use App\Http\Resources\EmployeeResource;
 use App\Models\Employee;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
-final class EmployeeController extends Controller
+final class EmployeeController
 {
     use AuthorizesRequests;
 
