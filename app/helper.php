@@ -8,3 +8,10 @@ if (! function_exists('only_numbers')) {
         return when($value, preg_replace('/[^\d]/', '', $value));
     }
 }
+
+if (! function_exists('format_cpf')) {
+    function format_cpf(mixed $value): ?string
+    {
+        return preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $value);
+    }
+}
