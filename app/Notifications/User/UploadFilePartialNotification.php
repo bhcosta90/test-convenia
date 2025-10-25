@@ -13,7 +13,7 @@ final class UploadFilePartialNotification extends Notification implements Should
 {
     use Queueable;
 
-    public function __construct(protected string $batchId) {}
+    public function __construct(private string $batchId) {}
 
     public function via($notifiable): array
     {
@@ -94,7 +94,7 @@ final class UploadFilePartialNotification extends Notification implements Should
             if (array_key_exists('errors', $item)) {
                 if (is_array($item['errors'])) {
                     $flat = [];
-                    $iterator = function ($v) use (&$flat, &$iterator) {
+                    $iterator = function ($v) use (&$flat, &$iterator): void {
                         if (is_array($v)) {
                             foreach ($v as $vv) {
                                 $iterator($vv);

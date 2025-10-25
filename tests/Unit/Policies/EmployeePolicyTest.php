@@ -6,7 +6,7 @@ use App\Models\Employee;
 use App\Models\User;
 use App\Policies\EmployeePolicy;
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->policy = new EmployeePolicy();
 
     $this->makeUser = function (int $id): User {
@@ -27,26 +27,26 @@ beforeEach(function () {
 
 // viewAny
 
-test('viewAny always allows', function () {
+test('viewAny always allows', function (): void {
     expect($this->policy->viewAny())->toBeTrue();
 });
 
 // create
 
-test('create always allows', function () {
+test('create always allows', function (): void {
     expect($this->policy->create())->toBeTrue();
 });
 
 // view
 
-test('view allows when user owns the employee', function () {
+test('view allows when user owns the employee', function (): void {
     $user = ($this->makeUser)(1);
     $employee = ($this->makeEmployeeForUser)(1);
 
     expect($this->policy->view($user, $employee))->toBeTrue();
 });
 
-test('view denies when user does not own the employee', function () {
+test('view denies when user does not own the employee', function (): void {
     $user = ($this->makeUser)(1);
     $employee = ($this->makeEmployeeForUser)(2);
 
@@ -55,14 +55,14 @@ test('view denies when user does not own the employee', function () {
 
 // update
 
-test('update allows when user owns the employee', function () {
+test('update allows when user owns the employee', function (): void {
     $user = ($this->makeUser)(10);
     $employee = ($this->makeEmployeeForUser)(10);
 
     expect($this->policy->update($user, $employee))->toBeTrue();
 });
 
-test('update denies when user does not own the employee', function () {
+test('update denies when user does not own the employee', function (): void {
     $user = ($this->makeUser)(10);
     $employee = ($this->makeEmployeeForUser)(20);
 
@@ -71,14 +71,14 @@ test('update denies when user does not own the employee', function () {
 
 // delete
 
-test('delete allows when user owns the employee', function () {
+test('delete allows when user owns the employee', function (): void {
     $user = ($this->makeUser)(99);
     $employee = ($this->makeEmployeeForUser)(99);
 
     expect($this->policy->delete($user, $employee))->toBeTrue();
 });
 
-test('delete denies when user does not own the employee', function () {
+test('delete denies when user does not own the employee', function (): void {
     $user = ($this->makeUser)(99);
     $employee = ($this->makeEmployeeForUser)(100);
 

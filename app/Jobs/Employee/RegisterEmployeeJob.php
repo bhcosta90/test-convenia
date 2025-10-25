@@ -21,8 +21,8 @@ final class RegisterEmployeeJob implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        protected readonly int $userId,
-        protected readonly array $data
+        private int $userId,
+        private array $data
     ) {}
 
     public function handle(): void
@@ -56,10 +56,10 @@ final class RegisterEmployeeJob implements ShouldQueue
             }
 
             $rules = $validation->make($employByEmail?->id ?: $employByCpf?->id);
-            $data = Validator::make(compact('name', 'email', 'cpf', 'city', 'state'), $rules)
+            $data = Validator::make(['name' => $name, 'email' => $email, 'cpf' => $cpf, 'city' => $city, 'state' => $state], $rules)
                 ->validate();
 
-            $user->employees()->updateOrCreate(compact('cpf', 'email'), $data);
+            $user->employees()->updateOrCreate(['cpf' => $cpf, 'email' => $email], $data);
         } catch (ValidationException $e) {
             $user = User::findOrFail($this->userId);
             $user->batch()->create([

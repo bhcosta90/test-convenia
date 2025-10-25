@@ -19,8 +19,8 @@ final class BulkStoreJob implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        protected readonly int $userId,
-        protected readonly string $file
+        private int $userId,
+        private string $file
     ) {}
 
     public function handle(): void
@@ -42,8 +42,8 @@ final class BulkStoreJob implements ShouldQueue
             $delimiter = str_contains(implode(',', $header), ';') ? ';' : ',';
 
             while (($row = fgetcsv($handle, 0, $delimiter, '"', '\\')) !== false) {
-                $row = array_map('trim', $row);
-                if (empty(array_filter($row))) {
+                $row = array_map(trim(...), $row);
+                if (array_filter($row) === []) {
                     continue;
                 }
                 yield $row;
@@ -52,8 +52,8 @@ final class BulkStoreJob implements ShouldQueue
             fclose($handle);
         });
 
-        $lines->chunk(50)->each(function (LazyCollection $chunk) {
-            $jobs = $chunk->map(fn ($line) => new RegisterEmployeeJob($this->userId, $line));
+        $lines->chunk(50)->each(function (LazyCollection $chunk): void {
+            $jobs = $chunk->map(fn ($line): RegisterEmployeeJob => new RegisterEmployeeJob($this->userId, $line));
             $this->batch()->add($jobs); // sem ->all()
         });
 

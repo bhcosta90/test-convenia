@@ -13,8 +13,6 @@ final class UploadFileSuccessNotification extends Notification implements Should
 {
     use Queueable;
 
-    public function __construct() {}
-
     public function via($notifiable): array
     {
         return ['mail'];

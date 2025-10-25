@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('batch_histories', function (Blueprint $table) {
+        Schema::create('batch_histories', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->uuid('batch_id');
             $table->string('type')->index();
