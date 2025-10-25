@@ -11,5 +11,5 @@ Route::prefix('auth')->controller(Controllers\AuthController::class)
     ->group(function () {
         Route::post('login', 'login')->withoutMiddleware('auth:api');
         Route::post('refresh', 'refresh')->withoutMiddleware('auth:api');
-        Route::post('logout', 'logout');
+        Route::delete('logout', 'logout');
     });
