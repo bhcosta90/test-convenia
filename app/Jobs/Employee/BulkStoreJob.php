@@ -31,8 +31,13 @@ final class BulkStoreJob implements ShouldQueue
 
         $filePath = Storage::path($this->file);
 
+        if (! is_file($filePath)) {
+            // File missing or unreadable; nothing to process.
+            return;
+        }
+
         $lines = LazyCollection::make(function () use ($filePath) {
-            $handle = fopen($filePath, 'r');
+            $handle = @fopen($filePath, 'r');
             if (! $handle) {
                 return;
             }
