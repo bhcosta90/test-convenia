@@ -17,11 +17,11 @@ final class EmployeeController
 {
     use AuthorizesRequests;
 
-    public function index(): AnonymousResourceCollection
+    public function index(#[CurrentUser] User $user): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Employee::class);
 
-        return EmployeeResource::collection(Employee::all());
+        return EmployeeResource::collection($user->employees()->simplePaginate());
     }
 
     public function store(EmployeeRequest $request, #[CurrentUser] User $user): EmployeeResource
