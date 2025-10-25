@@ -15,7 +15,6 @@ final class Employee extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id',
         'name',
         'email',
         'cpf',
