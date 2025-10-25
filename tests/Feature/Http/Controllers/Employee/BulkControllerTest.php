@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Enums\BatchEnum;
 use App\Jobs\Employee\BulkStoreJob;
 use App\Models\User;
-use Closure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
@@ -17,30 +16,6 @@ uses(RefreshDatabase::class);
 // -------------------------------------
 // Helper utilities for this test suite
 // -------------------------------------
-
-final class ChainBatchFake
-{
-    public ?Closure $captured = null;
-
-    public function __construct(public string $id, private bool $captureThen = false) {}
-
-    public function then(Closure $cb): self
-    {
-        if ($this->captureThen) {
-            $this->captured = $cb;
-        }
-
-        return $this;
-    }
-
-    public function dispatch(): object
-    {
-        return new class($this->id)
-        {
-            public function __construct(public string $id) {}
-        };
-    }
-}
 
 beforeEach(function (): void {
     $this->makeCsvUpload = function (string $contents = "name;email;cpf;city;state\nJohn Doe;john@example.com;52998224725;City;ST\n"): UploadedFile {
@@ -58,7 +33,34 @@ beforeEach(function (): void {
         return new UploadedFile($fullPath, $name, 'text/csv', null, true);
     };
 
-    $this->expectBusBatchReturning = function (ChainBatchFake $chainFake): void {
+    // Factory for a chainable Bus::batch() fake using an anonymous class
+    $this->makeChainBatchFake = function (string $id, bool $captureThen = false): object {
+        return new class($id, $captureThen)
+        {
+            public ?Closure $captured = null;
+
+            public function __construct(public string $id, private bool $captureThen = false) {}
+
+            public function then(Closure $cb): self
+            {
+                if ($this->captureThen) {
+                    $this->captured = $cb;
+                }
+
+                return $this;
+            }
+
+            public function dispatch(): object
+            {
+                return new class($this->id)
+                {
+                    public function __construct(public string $id) {}
+                };
+            }
+        };
+    };
+
+    $this->expectBusBatchReturning = function ($chainFake): void {
         Bus::shouldReceive('batch')
             ->once()
             ->with(Mockery::on(fn ($jobs) => is_array($jobs) && count($jobs) === 1 && $jobs[0] instanceof BulkStoreJob))
@@ -193,7 +195,7 @@ it('stores the file, clears previous histories for the user and dispatches a bat
 
     // mock Bus::batch to return a tiny chainable fake with a known id and without executing the then() callback.
     $expectedBatchId = (string) Str::uuid();
-    $chainFake = new ChainBatchFake($expectedBatchId, captureThen: false);
+    $chainFake = ($this->makeChainBatchFake)($expectedBatchId, captureThen: false);
     ($this->expectBusBatchReturning)($chainFake);
 
     $response = $this->postJson('/api/employees/bulk-store', ['file' => $file])
@@ -226,7 +228,7 @@ it('executes then() callback and sends success notification when there are no er
     $expectedBatchId = (string) Str::uuid();
 
     // Chain fake that CAPTURES the then-closure but does not execute it automatically
-    $chainFake = new ChainBatchFake($expectedBatchId, captureThen: true);
+    $chainFake = ($this->makeChainBatchFake)($expectedBatchId, captureThen: true);
     ($this->expectBusBatchReturning)($chainFake);
 
     // Hit the endpoint (this stores the file, clears old histories, and sets up the then() callback)
@@ -253,7 +255,7 @@ it('executes then() callback and sends partial notification when there are error
 
     $expectedBatchId = (string) Str::uuid();
 
-    $chainFake = new ChainBatchFake($expectedBatchId, captureThen: true);
+    $chainFake = ($this->makeChainBatchFake)($expectedBatchId, captureThen: true);
     ($this->expectBusBatchReturning)($chainFake);
 
     // Call endpoint
