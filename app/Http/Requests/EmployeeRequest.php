@@ -17,11 +17,36 @@ final class EmployeeRequest extends FormRequest
         $id = $this->route('employee');
 
         return [
-            'name' => [new RequiredIf(! $id)],
-            'email' => [new RequiredIf(! $id), 'email', 'max:254', Rule::unique(Employee::class)->where('user_id', $this->user()->id)->ignore($this->employee?->id)],
-            'cpf' => [new RequiredIf(! $id), new CpfRule(), Rule::unique(Employee::class)->where('user_id', $this->user()->id)->ignore($this->employee?->id)],
-            'city' => [new RequiredIf(! $id)],
-            'state' => [new RequiredIf(! $id)],
+            'name' => [
+                new RequiredIf(! $id),
+                'string',
+                'min:1',
+            ],
+            'email' => [
+                new RequiredIf(! $id),
+                'string',
+                'min:1',
+                'email:rfc,filter',
+                'max:254',
+                Rule::unique(Employee::class)->where('user_id', $this->user()->id)->ignore($this->employee?->id),
+            ],
+            'cpf' => [
+                new RequiredIf(! $id),
+                'string',
+                'min:1',
+                new CpfRule(),
+                Rule::unique(Employee::class)->where('user_id', $this->user()->id)->ignore($this->employee?->id),
+            ],
+            'city' => [
+                new RequiredIf(! $id),
+                'string',
+                'min:1',
+            ],
+            'state' => [
+                new RequiredIf(! $id),
+                'string',
+                'min:1',
+            ],
         ];
     }
 
