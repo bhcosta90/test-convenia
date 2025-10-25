@@ -48,11 +48,13 @@ final readonly class EmployeeValidation
                 new RequiredIf(! $id),
                 'string',
                 'min:1',
+                'max:254',
             ],
             'state' => [
                 new RequiredIf(! $id),
                 'string',
                 'min:1',
+                'max:254',
             ],
         ];
     }
