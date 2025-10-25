@@ -12,8 +12,6 @@ use Tymon\JWTAuth\Facades\JWTFactory;
 
 final class AuthController
 {
-    public function __construct() {}
-
     public function login(Auth\LoginRequest $request): JsonResponse
     {
         $credentials = $request->only(['email', 'password']);
@@ -39,7 +37,7 @@ final class AuthController
                 'device' => $device,
                 'type' => 'refresh',
             ], $expiredRefreshToken);
-        } catch (JWTException $e) {
+        } catch (JWTException) {
             return response()->json([
                 'message' => __('Unable to create tokens.'),
             ], 500);
