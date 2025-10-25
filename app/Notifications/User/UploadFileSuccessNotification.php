@@ -21,7 +21,7 @@ final class UploadFileSuccessNotification extends Notification implements Should
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(__('File upload completed successfully'))
+            ->subject(__('Your CSV was processed successfully'))
             ->markdown('emails.upload_success');
     }
 
