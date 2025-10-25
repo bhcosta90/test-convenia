@@ -6,6 +6,8 @@ use App\Http\Controllers;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:api')->group(function (): void {
+    Route::post('employees/bulk-store', [Controllers\EmployeeController::class, 'bulkStore']);
+
     Route::apiResource('employees', Controllers\EmployeeController::class);
     Route::controller(Controllers\AuthController::class)
         ->prefix('auth')
