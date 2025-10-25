@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notification;
 
 final class UploadFilePartialNotification extends Notification
 {
-    public function __construct() {}
+    public function __construct(protected string $batchId) {}
 
     public function via($notifiable): array
     {

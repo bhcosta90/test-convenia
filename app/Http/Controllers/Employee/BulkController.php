@@ -9,6 +9,7 @@ use App\Http\Requests\Employee\BulkStoreRequest;
 use App\Http\Resources\BatchHistoryResource;
 use App\Jobs\Employee\BulkStoreJob;
 use App\Notifications;
+use Illuminate\Bus\Batch;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -32,9 +33,9 @@ final class BulkController
         $batch = Bus::batch([
             new BulkStoreJob($request->user()->id, $path),
         ])
-            ->then(fn () => $request->user()->notify(
+            ->then(fn (Batch $batch) => $request->user()->notify(
                 $request->user()->batch()->where('type', BatchEnum::EMPLOYEE_BULK_STORE)->count()
-                    ? new Notifications\User\UploadFilePartialNotification()
+                    ? new Notifications\User\UploadFilePartialNotification($batch->id)
                     : new Notifications\User\UploadFileSuccessNotification()
             ))
             ->dispatch();
