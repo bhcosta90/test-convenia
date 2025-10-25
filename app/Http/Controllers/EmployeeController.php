@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests;
+use App\Http\Resources\BatchHistoryResource;
 use App\Http\Resources\EmployeeResource;
 use App\Jobs\Employee\BulkStoreJob;
 use App\Models\Employee;
@@ -61,13 +62,24 @@ final class EmployeeController
     public function bulkStore(Requests\Employee\BulkStoreRequest $request): JsonResponse
     {
         $path = $request->file('file')->store('tmp');
+        $request->user()->batch()->delete();
 
         $batch = Bus::batch([
             new BulkStoreJob($request->user()->id, $path),
-        ])->dispatch();
+        ])
+            ->dispatch();
 
         return response()->json([
-            'message' => __('Bulk store send successfully with id: :id.', ['id' => $batch->id]),
+            'message' => __('Bulk store send successfully'),
+            'batch_id' => $batch->id,
         ]);
+    }
+
+    public function bulkHistory(#[CurrentUser] $user, string $id): AnonymousResourceCollection
+    {
+        return BatchHistoryResource::collection($user->batch()->where('batch_id', $id)->simplePaginate())
+            ->additional([
+                'batch' => Bus::findBatch($id),
+            ]);
     }
 }
