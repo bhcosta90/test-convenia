@@ -23,7 +23,9 @@ final class RegisterEmployeeJob implements ShouldQueue
     public function __construct(
         private readonly int $userId,
         private readonly array $data
-    ) {}
+    ) {
+        $this->delay(app()->isLocal() ? 0 : rand(5, 120));
+    }
 
     public function handle(): void
     {
@@ -49,7 +51,7 @@ final class RegisterEmployeeJob implements ShouldQueue
         $employByCpf = $user->employees()->where('cpf', $cpf)->first();
 
         try {
-            if ($employByEmail?->id !== $employByCpf?->id) {
+            if ($employByEmail && $employByCpf && $employByEmail?->id !== $employByCpf?->id) {
                 throw ValidationException::withMessages([
                     'email_or_cpf' => ['CPF and E-mail conflict for different employees.'],
                 ]);
@@ -59,7 +61,7 @@ final class RegisterEmployeeJob implements ShouldQueue
             $data = Validator::make(['name' => $name, 'email' => $email, 'cpf' => $cpf, 'city' => $city, 'state' => $state], $rules)
                 ->validate();
 
-            $user->employees()->updateOrCreate(['cpf' => $cpf, 'email' => $email], $data);
+            $user->employees()->updateOrCreate(['cpf' => only_numbers($cpf), 'email' => $email], $data);
         } catch (ValidationException $e) {
             $user = User::findOrFail($this->userId);
             $user->batch()->create([
