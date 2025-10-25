@@ -19,7 +19,8 @@ final class UploadFileSuccessNotification extends Notification
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->line('');
+            ->subject(__('File upload completed successfully'))
+            ->markdown('emails.upload_success');
     }
 
     public function toArray($notifiable): array
