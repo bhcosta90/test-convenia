@@ -97,6 +97,13 @@ test('empty string without nullable currently passes (documenting behavior)', fu
     expect($validator->passes())->toBeTrue();
 });
 
+test('null without nullable currently passes (documenting behavior)', function () {
+    // Current rule returns early for null as well, allowing it to pass without the nullable rule
+    $validator = makeValidator(null);
+
+    expect($validator->passes())->toBeTrue();
+});
+
 test('integer input is accepted when digits form a valid CPF', function () {
     // Same as 52998224725 but as integer (leading zeros would be lost in other cases)
     $validator = makeValidator(52998224725);
