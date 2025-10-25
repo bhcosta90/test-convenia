@@ -30,7 +30,7 @@ final class Employee extends Model
     public function cpf(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $value),
+            get: fn ($value) => format_cpf($value),
             set: fn ($value) => only_numbers($value),
         );
     }
