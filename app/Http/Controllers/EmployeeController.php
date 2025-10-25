@@ -21,7 +21,12 @@ final class EmployeeController
     {
         $this->authorize('viewAny', Employee::class);
 
-        return EmployeeResource::collection($user->employees()->simplePaginate());
+        $employees = $user->employees()
+            ->orderBy('name')
+            ->orderBy('created_at', 'desc')
+            ->simplePaginate();
+
+        return EmployeeResource::collection($employees);
     }
 
     public function store(Requests\EmployeeRequest $request): EmployeeResource
