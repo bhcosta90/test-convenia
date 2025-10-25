@@ -55,7 +55,8 @@ final class RegisterEmployeeJob implements ShouldQueue
                 ]);
             }
 
-            $data = Validator::make(compact('name', 'email', 'cpf', 'city', 'state'), $validation->make($employByEmail?->id ?: $employByCpf?->id))
+            $rules = $validation->make($employByEmail?->id ?: $employByCpf?->id);
+            $data = Validator::make(compact('name', 'email', 'cpf', 'city', 'state'), $rules)
                 ->validate();
 
             $user->employees()->updateOrCreate(compact('cpf', 'email'), $data);
