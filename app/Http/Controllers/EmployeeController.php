@@ -10,12 +10,14 @@ use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 final class EmployeeController
 {
     use AuthorizesRequests;
 
-    public function index()
+    public function index(): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Employee::class);
 
@@ -45,7 +47,7 @@ final class EmployeeController
         return new EmployeeResource($employee);
     }
 
-    public function destroy(Employee $employee)
+    public function destroy(Employee $employee): JsonResponse
     {
         $this->authorize('delete', $employee);
 
