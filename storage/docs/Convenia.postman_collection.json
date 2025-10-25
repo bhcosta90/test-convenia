@@ -161,7 +161,7 @@
 							"mode": "urlencoded",
 							"urlencoded": [
 								{
-									"key": "token",
+									"key": "refresh_token",
 									"value": "{{refresh_token}}",
 									"type": "text"
 								}
