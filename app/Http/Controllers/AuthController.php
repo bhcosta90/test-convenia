@@ -101,9 +101,6 @@ final class AuthController
         return JWTAuth::factory()->getTTL() * 60 * 24 * 7;
     }
 
-    /**
-     * Creates a refresh token with the provided claims.
-     */
     private function makeRefreshToken(array $claims, int $ttl): string
     {
         $refreshPayload = JWTFactory::customClaims($claims)
@@ -113,9 +110,6 @@ final class AuthController
         return JWTAuth::encode($refreshPayload)->get();
     }
 
-    /**
-     * Builds the standardized JSON token response.
-     */
     private function respondWithTokens(string $accessToken, int $expiresIn, string $refreshToken, int $refreshExpiresIn): JsonResponse
     {
         return response()->json([
