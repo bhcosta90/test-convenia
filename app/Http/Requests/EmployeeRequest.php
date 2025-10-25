@@ -4,19 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Http\Validation\EmployeeValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class EmployeeRequest extends FormRequest
 {
     public function rules(): array
     {
-        return [
-            'name' => ['required'],
-            'email' => ['required', 'email', 'max:254'],
-            'cpf' => ['required'],
-            'city' => ['required'],
-            'state' => ['required'],
-        ];
+        $validation = app(EmployeeValidation::class);
+
+        return $validation->make($this->route('employee'));
     }
 
     public function authorize(): bool

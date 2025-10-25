@@ -5,4 +5,16 @@ declare(strict_types=1);
 use App\Http\Controllers;
 use Illuminate\Support\Facades\Route;
 
-Route::apiResource('employees', Controllers\EmployeeController::class);
+Route::middleware('auth:api')->group(function (): void {
+    Route::get('employees/{id}/bulk-history', [Controllers\Employee\BulkController::class, 'index']);
+    Route::post('employees/bulk-store', [Controllers\Employee\BulkController::class, 'store']);
+
+    Route::apiResource('employees', Controllers\EmployeeController::class);
+    Route::controller(Controllers\AuthController::class)
+        ->prefix('auth')
+        ->group(function (): void {
+            Route::post('login', 'login')->withoutMiddleware('auth:api');
+            Route::post('refresh', 'refresh')->withoutMiddleware('auth:api');
+            Route::delete('logout', 'logout');
+        });
+});
