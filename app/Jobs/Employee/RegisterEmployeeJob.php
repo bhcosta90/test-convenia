@@ -33,7 +33,13 @@ final class RegisterEmployeeJob implements ShouldQueue
 
         $user = User::findOrFail($this->userId);
 
-        [$name, $email, $cpf, $city, $state] = $this->data;
+        [
+            $name,
+            $email,
+            $cpf,
+            $city,
+            $state
+        ] = $this->data;
 
         $validation = app(EmployeeValidation::class, [
             'user' => $user,
