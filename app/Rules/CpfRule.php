@@ -16,6 +16,13 @@ final class CpfRule implements ValidationRule
             return;
         }
 
+        // Guard against non-stringable types (e.g., arrays, objects without __toString)
+        if (! is_string($value) && ! is_int($value)) {
+            $fail(__('The :attribute must be a valid CPF.'));
+
+            return;
+        }
+
         $digits = preg_replace('/\D+/', '', (string) $value);
 
         if ($digits === null || mb_strlen($digits) !== 11) {
