@@ -144,6 +144,6 @@ final class UploadFilePartialNotification extends Notification implements Should
 
     private function csvFilename(): string
     {
-        return sprintf('batch_errors_%s.csv', $this->batchId);
+        return sprintf('batch-errors-%s.csv', $this->batchId);
     }
 }
