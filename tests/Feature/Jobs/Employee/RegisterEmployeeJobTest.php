@@ -39,7 +39,7 @@ it('creates a new employee when data is valid and there is no conflict', functio
     expect($employee)->not->toBeNull()
         ->and($employee->name)->toBe('Alice Smith')
         ->and($employee->email)->toBe('alice@example.com')
-        ->and($employee->cpf)->toBe('52998224725')
+        ->and($employee->cpf)->toBe('529.982.247-25')
         ->and($employee->city)->toBe('São Paulo')
         ->and($employee->state)->toBe('SP')
         ->and(BatchHistory::count())->toBe(0);
