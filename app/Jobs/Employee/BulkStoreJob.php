@@ -19,8 +19,8 @@ final class BulkStoreJob implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        private int $userId,
-        private string $file
+        private readonly int $userId,
+        private readonly string $file
     ) {}
 
     public function handle(): void
