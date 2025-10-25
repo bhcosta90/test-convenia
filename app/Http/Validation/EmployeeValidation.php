@@ -18,8 +18,10 @@ final readonly class EmployeeValidation
         //
     }
 
-    public function make(?int $id = null): array
+    public function make(?Employee $employee = null): array
     {
+        $id = $employee?->id;
+
         return [
             'name' => [
                 new RequiredIf(! $id),

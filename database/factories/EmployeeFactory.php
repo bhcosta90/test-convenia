@@ -19,7 +19,7 @@ final class EmployeeFactory extends Factory
             'user_id' => User::factory(),
             'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
-            'cpf' => $this->faker->word(),
+            'cpf' => $this->faker->numerify('###########'),
             'city' => $this->faker->city(),
             'state' => $this->faker->word(),
             'created_at' => Carbon::now(),
