@@ -205,3 +205,142 @@ it('stores the file, clears previous histories for the user and dispatches a bat
     // but ensure we still have the content in fake storage root (uploaded file was provided from fake path).
     // The controller does not persist the uploaded filename, only passes its stored path to the job.
 });
+
+// ===============================
+// THEN callback notification behavior
+// ===============================
+
+it('executes then() callback and sends success notification when there are no error histories', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user, 'api');
+
+    // fake notifications
+    Notification::fake();
+
+    // prepare a small CSV upload
+    Storage::fake();
+    $path = Storage::disk()->path('tmp');
+    if (! is_dir($path)) {
+        @mkdir($path, 0777, true);
+    }
+    $name = 'employees.csv';
+    $full = $path.DIRECTORY_SEPARATOR.$name;
+    file_put_contents($full, "name;email;cpf;city;state\nJohn Doe;john@example.com;52998224725;City;ST\n");
+    $file = new UploadedFile($full, $name, 'text/csv', null, true);
+
+    $expectedBatchId = (string) Str::uuid();
+
+    // Chain fake that CAPTURES the then-closure but does not execute it automatically
+    $chainFake = new class($expectedBatchId)
+    {
+        public string $id;
+
+        public ?Closure $captured = null;
+
+        public function __construct(string $id)
+        {
+            $this->id = $id;
+        }
+
+        public function then(Closure $cb): self
+        {
+            $this->captured = $cb;
+
+            return $this;
+        }
+
+        public function dispatch(): object
+        {
+            return new class($this->id)
+            {
+                public function __construct(public string $id) {}
+            };
+        }
+    };
+
+    Bus::shouldReceive('batch')
+        ->once()
+        ->with(Mockery::on(fn ($jobs) => is_array($jobs) && count($jobs) === 1 && $jobs[0] instanceof BulkStoreJob))
+        ->andReturn($chainFake);
+
+    // Hit the endpoint (this stores the file, clears old histories, and sets up the then() callback)
+    $res = $this->postJson('/api/employees/bulk-store', ['file' => $file])->assertOk();
+    expect($res->json('batch_id'))->toBe($expectedBatchId);
+
+    // Simulate the framework calling the then() callback after the batch completes
+    $fakeBatch = Mockery::mock(Illuminate\Bus\Batch::class);
+    $fakeBatch->id = $expectedBatchId;
+    ($chainFake->captured)($fakeBatch);
+
+    // No new histories of type EMPLOYEE_BULK_STORE were created -> success notification
+    Notification::assertSentTo($user, App\Notifications\User\UploadFileSuccessNotification::class);
+    Notification::assertNotSentTo($user, App\Notifications\User\UploadFilePartialNotification::class);
+});
+
+it('executes then() callback and sends partial notification when there are error histories', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user, 'api');
+
+    Notification::fake();
+
+    Storage::fake();
+    $path = Storage::disk()->path('tmp');
+    if (! is_dir($path)) {
+        @mkdir($path, 0777, true);
+    }
+    $name = 'employees.csv';
+    $full = $path.DIRECTORY_SEPARATOR.$name;
+    file_put_contents($full, "name;email;cpf;city;state\nJohn Doe;john@example.com;52998224725;City;ST\n");
+    $file = new UploadedFile($full, $name, 'text/csv', null, true);
+
+    $expectedBatchId = (string) Str::uuid();
+
+    $chainFake = new class($expectedBatchId)
+    {
+        public string $id;
+
+        public ?Closure $captured = null;
+
+        public function __construct(string $id)
+        {
+            $this->id = $id;
+        }
+
+        public function then(Closure $cb): self
+        {
+            $this->captured = $cb;
+
+            return $this;
+        }
+
+        public function dispatch(): object
+        {
+            return new class($this->id)
+            {
+                public function __construct(public string $id) {}
+            };
+        }
+    };
+
+    Bus::shouldReceive('batch')
+        ->once()
+        ->with(Mockery::on(fn ($jobs) => is_array($jobs) && count($jobs) === 1 && $jobs[0] instanceof BulkStoreJob))
+        ->andReturn($chainFake);
+
+    // Call endpoint
+    $this->postJson('/api/employees/bulk-store', ['file' => $file])->assertOk();
+
+    // Simulate that, by the time the batch finishes, there are error histories for this user
+    $user->batch()->create([
+        'type' => BatchEnum::EMPLOYEE_BULK_STORE,
+        'batch_id' => $expectedBatchId,
+        'data' => ['data' => ['John'], 'errors' => ['email' => ['taken']]],
+    ]);
+
+    $fakeBatch = Mockery::mock(Illuminate\Bus\Batch::class);
+    $fakeBatch->id = $expectedBatchId;
+    ($chainFake->captured)($fakeBatch);
+
+    Notification::assertSentTo($user, App\Notifications\User\UploadFilePartialNotification::class);
+    Notification::assertNotSentTo($user, App\Notifications\User\UploadFileSuccessNotification::class);
+});
