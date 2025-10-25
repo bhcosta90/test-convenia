@@ -12,6 +12,9 @@ use Illuminate\Routing\Route;
 use Illuminate\Support\ServiceProvider;
 use Override;
 
+/**
+ * @codeCoverageIgnore
+ */
 final class AppServiceProvider extends ServiceProvider
 {
     #[Override]
