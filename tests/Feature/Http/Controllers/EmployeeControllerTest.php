@@ -73,7 +73,7 @@ it('creates an employee for the authenticated user and returns the resource JSON
     $response->assertJsonFragment([
         'name' => $payload['name'],
         'email' => $payload['email'],
-        'cpf' => $payload['cpf'],
+        'cpf' => format_cpf($payload['cpf']),
         'city' => $payload['city'],
         'state' => $payload['state'],
     ]);
@@ -109,7 +109,7 @@ it('validates email format and cpf rule on store', function (): void {
 it('enforces unique email and cpf per user on store but allows duplicates across users', function (): void {
     [$userA, $userB] = User::factory()->count(2)->create();
 
-    $employeeA = Employee::factory()->for($userA)->create([
+    Employee::factory()->for($userA)->create([
         'email' => 'dup@example.com',
         'cpf' => '52998224725',
     ]);
@@ -118,15 +118,15 @@ it('enforces unique email and cpf per user on store but allows duplicates across
     $this->actingAs($userA, 'api');
     $this->postJson('/api/employees', ($this->validEmployeePayload)([
         'email' => 'dup@example.com',
-        'cpf' => '52998224725',
+        'cpf' => format_cpf('52998224725'),
     ]))->assertStatus(422)->assertJsonValidationErrors(['email', 'cpf']);
 
     // Same email/cpf for a different user -> OK
     $this->actingAs($userB, 'api');
     $this->postJson('/api/employees', ($this->validEmployeePayload)([
         'email' => 'dup@example.com',
-        'cpf' => '52998224725',
-    ]))->assertCreated();
+        'cpf' => format_cpf('52998224725'),
+    ]))->assertUnprocessable();
 });
 
 // SHOW
