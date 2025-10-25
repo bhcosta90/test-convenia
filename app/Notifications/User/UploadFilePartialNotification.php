@@ -46,37 +46,46 @@ final class UploadFilePartialNotification extends Notification
 
     private function buildCsvFromBatchErrors(array $errors): string
     {
-        // We expect each $item to be something like: ['data' => [...], 'errors' => [...]]
-        // Goal: Expand 'data' into multiple columns and place 'error' as the last column.
+        // Expected structure for each $item: ['data' => [...], 'errors' => [...]]
+        // Fixed headers order as requested: name, email, cpf, city, state, then errors
+        $headers = ['name', 'email', 'cpf', 'city', 'state', 'errors'];
         $rows = [];
-        $dataKeys = [];
 
         foreach ($errors as $item) {
             $item = is_array($item) ? $item : [];
             $payload = $item['data'] ?? [];
 
-            $row = [];
+            // Initialize row with empty values for all known headers (except 'errors')
+            $row = [
+                'name' => '',
+                'email' => '',
+                'cpf' => '',
+                'city' => '',
+                'state' => '',
+            ];
 
-            // Expand 'data' into columns
+            // Map payload into fixed columns, supporting associative and indexed arrays
             if (is_array($payload)) {
                 $isList = array_keys($payload) === range(0, count($payload) - 1);
                 if ($isList) {
-                    // Numeric array: name columns as data_1..data_N
-                    foreach ($payload as $idx => $value) {
-                        $col = 'data_'.($idx + 1);
-                        $dataKeys[$col] = true;
-                        $row[$col] = $value;
+                    // Indexed: assume positions 0..4 map to name,email,cpf,city,state
+                    $map = ['name', 'email', 'cpf', 'city', 'state'];
+                    foreach ($map as $i => $key) {
+                        if (array_key_exists($i, $payload)) {
+                            $row[$key] = $payload[$i];
+                        }
                     }
                 } else {
-                    // Associative array: use actual keys
-                    foreach ($payload as $key => $value) {
-                        $dataKeys[$key] = true;
-                        $row[$key] = $value;
+                    // Associative: use provided keys if present
+                    foreach (['name', 'email', 'cpf', 'city', 'state'] as $key) {
+                        if (array_key_exists($key, $payload)) {
+                            $row[$key] = $payload[$key];
+                        }
                     }
                 }
             }
 
-            // Build a single 'error' text joining messages by ';'
+            // Build a single 'errors' text joining messages by ';'
             $err = '';
             if (array_key_exists('errors', $item)) {
                 if (is_array($item['errors'])) {
@@ -99,14 +108,10 @@ final class UploadFilePartialNotification extends Notification
                     $err = (string) $item['errors'];
                 }
             }
-            $row['error'] = $err;
+            $row['errors'] = $err;
 
             $rows[] = $row;
         }
-
-        // Finalize headers: all data keys first, then 'error'
-        $headers = array_keys($dataKeys);
-        $headers[] = 'error';
 
         // Build CSV with UTF-8 BOM and semicolon delimiter for better Excel compatibility
         $out = fopen('php://temp', 'r+');
