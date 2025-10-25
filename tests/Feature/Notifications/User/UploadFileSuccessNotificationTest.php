@@ -20,12 +20,9 @@ it('builds the correct mail message without attachments', function (): void {
 
     $mail = $notification->toMail($this->user);
 
-    // Subject and markdown view
-    expect($mail->subject)->toBe(__('File upload completed successfully'))
-        ->and($mail->markdown)->toBe('emails.upload_success');
-
-    // No attachments should be added
-    expect($mail->attachments)->toBeArray()
+    expect($mail->subject)->toBe(__('Your CSV was processed successfully'))
+        ->and($mail->markdown)->toBe('emails.upload_success')
+        ->and($mail->attachments)->toBeArray()
         ->and($mail->attachments)->toHaveCount(0);
 });
 
