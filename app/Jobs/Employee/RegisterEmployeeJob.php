@@ -65,7 +65,7 @@ final class RegisterEmployeeJob implements ShouldQueue
                 'type' => BatchEnum::EMPLOYEE_BULK_STORE,
                 'batch_id' => $this->batch()->id,
                 'data' => [
-                    'error' => $e->errors(),
+                    'errors' => $e->errors(),
                     'data' => $this->data,
                 ],
             ]);
