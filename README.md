@@ -119,6 +119,12 @@ Check the Postman collection for exact auth endpoints and payloads.
   storage/docs
   ```
 
+- Project requirements (PDF):
+
+  ```
+  storage/docs/requirements.pdf
+  ```
+
 - Import the collection in Postman to explore and execute requests.
 - Endpoints cover authentication, employee management, and CSV bulk import.
 
