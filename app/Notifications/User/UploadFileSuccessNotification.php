@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Notifications\User;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-final class UploadFileSuccessNotification extends Notification
+final class UploadFileSuccessNotification extends Notification implements ShouldQueue
 {
+    use Queueable;
+
     public function __construct() {}
 
     public function via($notifiable): array
