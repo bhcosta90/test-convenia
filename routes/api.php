@@ -6,6 +6,7 @@ use App\Http\Controllers;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:api')->group(function (): void {
+    Route::get('employees/{id}/bulk-history', [Controllers\EmployeeController::class, 'bulkHistory']);
     Route::post('employees/bulk-store', [Controllers\EmployeeController::class, 'bulkStore']);
 
     Route::apiResource('employees', Controllers\EmployeeController::class);
