@@ -1,8 +1,8 @@
 @component('mail::message')
-# {{ __('Upload completed!') }}
+# {{ __('All set!') }}
 
-{{ __('Your file has been uploaded and processed successfully. All records were imported without any issues.') }}
+{{ __('We’ve finished processing your file and all records were imported successfully.') }}
 
-{{ __('Thank you for using our service!') }}
+{{ __('Thanks for using our service!') }}
 
 @endcomponent
