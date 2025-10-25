@@ -12,17 +12,28 @@ final class EmployeePolicy
 {
     use HandlesAuthorization;
 
-    public function viewAny(User $user): bool {}
+    public function viewAny(): bool
+    {
+        return true;
+    }
 
-    public function view(User $user, Employee $employee): bool {}
+    public function view(User $user, Employee $employee): bool
+    {
+        return $user->id === $employee->user_id;
+    }
 
-    public function create(User $user): bool {}
+    public function create(): bool
+    {
+        return true;
+    }
 
-    public function update(User $user, Employee $employee): bool {}
+    public function update(User $user, Employee $employee): bool
+    {
+        return $user->id === $employee->user_id;
+    }
 
-    public function delete(User $user, Employee $employee): bool {}
-
-    public function restore(User $user, Employee $employee): bool {}
-
-    public function forceDelete(User $user, Employee $employee): bool {}
+    public function delete(User $user, Employee $employee): bool
+    {
+        return $user->id === $employee->user_id;
+    }
 }
