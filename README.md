@@ -105,7 +105,15 @@ Check the Postman collection for exact auth endpoints and payloads.
 
 
 ## API Documentation
-- A Postman collection is provided under:
+- Swagger UI (OpenAPI) is available at:
+
+  ```
+  /api/docs
+  ```
+
+  When running locally with `php artisan serve`, access it at `http://127.0.0.1:8000/api/docs`. Use it to explore endpoints and run tests interactively.
+
+- A Postman collection is also provided under:
 
   ```
   storage/docs
