@@ -229,8 +229,7 @@ it('deletes (soft deletes) an employee for the owner and returns empty JSON', fu
     $this->actingAs($user, 'api');
 
     $this->deleteJson("/api/employees/{$employee->id}")
-        ->assertOk()
-        ->assertExactJson([]);
+        ->assertNoContent();
 
     $this->assertSoftDeleted('employees', [
         'id' => $employee->id,
