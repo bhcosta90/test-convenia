@@ -28,10 +28,14 @@ final class EmployeeController
             $employees = $user->employees()
                 ->orderBy('name')
                 ->orderBy('created_at', 'desc')
-                ->toBase()
                 ->simplePaginate();
 
             return EmployeeResource::collection($employees)
+                ->additional([
+                    'meta' => [
+                        'has_more_page' => $employees->hasMorePages(),
+                    ],
+                ])
                 ->response()
                 ->getData(true);
         });
