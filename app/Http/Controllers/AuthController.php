@@ -31,7 +31,7 @@ final class AuthController
             $accessToken = JWTAuth::claims($claims)->attempt($credentials);
             if (! $accessToken) {
                 return response()->json([
-                    'message' => 'Credenciais inválidas.',
+                    'message' => __('Invalid credentials.'),
                 ], 401);
             }
 
@@ -41,7 +41,7 @@ final class AuthController
             ], $expiredRefreshToken);
         } catch (JWTException $e) {
             return response()->json([
-                'message' => 'Não foi possível criar os tokens.',
+                'message' => __('Unable to create tokens.'),
             ], 500);
         }
 
@@ -58,7 +58,7 @@ final class AuthController
 
             if ($payload->get('type') !== 'refresh') {
                 return response()->json([
-                    'message' => 'Token inválido para refresh.',
+                    'message' => __('Invalid token for refresh.'),
                 ], 401);
             }
 
@@ -69,7 +69,7 @@ final class AuthController
 
             $user = JWTAuth::claims($claims)->setToken($request->token)->toUser();
 
-            // Cria novo access token
+            // Create new access token
             $accessToken = JWTAuth::fromUser($user);
 
             $refreshToken = $this->makeRefreshToken([
@@ -77,7 +77,7 @@ final class AuthController
             ], $expiredRefreshToken);
         } catch (JWTException) {
             return response()->json([
-                'message' => 'Token de refresh inválido ou expirado.',
+                'message' => __('Invalid or expired refresh token.'),
             ], 401);
         }
 
@@ -88,7 +88,7 @@ final class AuthController
     {
         auth()->logout();
 
-        return response()->json(['message' => 'Logout realizado com sucesso.']);
+        return response()->json(['message' => __('Logout successful.')]);
     }
 
     private function accessTokenTtlSeconds(): int
@@ -102,25 +102,25 @@ final class AuthController
     }
 
     /**
-     * Cria um refresh token com as claims fornecidas.
+     * Creates a refresh token with the provided claims.
      */
     private function makeRefreshToken(array $claims, int $ttl): string
     {
         $refreshPayload = JWTFactory::customClaims($claims)
-            ->setTTL($ttl) // 7 dias
+            ->setTTL($ttl) // 7 days
             ->make();
 
         return JWTAuth::encode($refreshPayload)->get();
     }
 
     /**
-     * Monta a resposta JSON de tokens padronizada.
+     * Builds the standardized JSON token response.
      */
     private function respondWithTokens(string $accessToken, int $expiresIn, string $refreshToken, int $refreshExpiresIn): JsonResponse
     {
         return response()->json([
             'access_token' => $accessToken,
-            'expires_in' => $expiresIn, // segundos
+            'expires_in' => $expiresIn, // seconds
             'refresh_token' => $refreshToken,
             'refresh_expires_in' => $refreshExpiresIn,
             'token_type' => 'bearer',
