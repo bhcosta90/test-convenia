@@ -22,21 +22,21 @@ final class EmployeeController
         return EmployeeResource::collection(Employee::all());
     }
 
-    public function store(EmployeeRequest $request, #[CurrentUser] User $user)
+    public function store(EmployeeRequest $request, #[CurrentUser] User $user): EmployeeResource
     {
         $this->authorize('create', Employee::class);
 
         return new EmployeeResource($user->employees()->create($request->validated()));
     }
 
-    public function show(Employee $employee)
+    public function show(Employee $employee): EmployeeResource
     {
         $this->authorize('view', $employee);
 
         return new EmployeeResource($employee);
     }
 
-    public function update(EmployeeRequest $request, Employee $employee)
+    public function update(EmployeeRequest $request, Employee $employee): EmployeeResource
     {
         $this->authorize('update', $employee);
 
