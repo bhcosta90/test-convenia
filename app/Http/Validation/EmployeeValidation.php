@@ -7,6 +7,7 @@ namespace App\Http\Validation;
 use App\Models\Employee;
 use App\Models\User;
 use App\Rules\CpfRule;
+use App\Rules\CpfUniqueRule;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\RequiredIf;
@@ -41,7 +42,7 @@ final readonly class EmployeeValidation
                 'string',
                 'min:1',
                 new CpfRule(),
-                Rule::unique(Employee::class)->where('user_id', $this->user->id)->ignore($id),
+                new CpfUniqueRule(new Employee(), $id),
             ],
             'city' => [
                 new RequiredIf(! $id),
