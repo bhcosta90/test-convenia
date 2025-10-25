@@ -52,6 +52,11 @@ final class User extends Authenticatable implements JWTSubject
         return [];
     }
 
+    public function batch(): HasMany
+    {
+        return $this->hasMany(BatchHistory::class);
+    }
+
     /**
      * Get the attributes that should be cast.
      *
