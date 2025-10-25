@@ -166,3 +166,13 @@ it('returns 500 when unable to create tokens on login (JWTException path)', func
             'message' => __('Unable to create tokens.'),
         ]);
 });
+
+it('returns 401 when refresh token is invalid or malformed (JWTException path)', function (): void {
+    // Directly call refresh with a clearly invalid JWT to trigger parsing error
+    $response = ($this->refresh)('invalid.token');
+
+    $response->assertStatus(401)
+        ->assertJson([
+            'message' => __('Invalid or expired refresh token.'),
+        ]);
+});
