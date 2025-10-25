@@ -23,9 +23,7 @@ final class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Scramble::configure()
-            ->routes(function (Route $route) {
-                return str($route->uri)->startsWith('api/');
-            })->withDocumentTransformers(function (OpenApi $openApi) {
+            ->routes(fn (Route $route) => str($route->uri)->startsWith('api/'))->withDocumentTransformers(function (OpenApi $openApi): void {
                 $openApi->components->securitySchemes['bearer'] = SecurityScheme::http('bearer');
 
                 $openApi->security[] = new SecurityRequirement([

@@ -80,7 +80,7 @@ final class AuthController
             $refreshToken = $this->makeRefreshToken([
                 'type' => 'refresh',
             ], $expiredRefreshToken);
-        } catch (JWTException $e) {
+        } catch (JWTException) {
             return response()->json([
                 'message' => __('Invalid or expired refresh token.'),
             ], 401);

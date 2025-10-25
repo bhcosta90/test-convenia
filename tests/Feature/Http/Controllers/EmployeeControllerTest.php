@@ -5,16 +5,14 @@ declare(strict_types=1);
 use App\Models\Employee;
 use App\Models\User;
 
-beforeEach(function () {
-    $this->validEmployeePayload = function (array $overrides = []) {
-        return array_merge([
-            'name' => 'John Doe',
-            'email' => 'john.doe@example.com',
-            'cpf' => '52998224725', // valid CPF from CpfRule tests
-            'city' => 'São Paulo',
-            'state' => 'SP',
-        ], $overrides);
-    };
+beforeEach(function (): void {
+    $this->validEmployeePayload = (fn (array $overrides = []): array => array_merge([
+        'name' => 'John Doe',
+        'email' => 'john.doe@example.com',
+        'cpf' => '52998224725', // valid CPF from CpfRule tests
+        'city' => 'São Paulo',
+        'state' => 'SP',
+    ], $overrides));
 });
 
 // AUTHENTICATION (401) for all endpoints

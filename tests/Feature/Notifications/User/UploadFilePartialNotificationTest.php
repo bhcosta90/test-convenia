@@ -70,10 +70,10 @@ it('builds mail with CSV attachment from batch histories (indexed and associativ
     $csv = $attachment['data'];
 
     // Starts with UTF-8 BOM
-    expect(str_starts_with($csv, "\xEF\xBB\xBF"))->toBeTrue();
+    expect(str_starts_with((string) $csv, "\xEF\xBB\xBF"))->toBeTrue();
 
     // Strip BOM for simpler asserts
-    $csvNoBom = mb_substr($csv, 1);
+    $csvNoBom = mb_substr((string) $csv, 1);
     // Normalize line endings and split into lines
     $normalized = mb_rtrim($csvNoBom, "\r\n");
     $lines = array_values(array_filter(preg_split("/\r\n|\n|\r/", $normalized)));
@@ -101,9 +101,9 @@ it('when there are no histories for batch, attaches CSV with only header', funct
     $attachment = $mail->rawAttachments[0];
 
     $csv = $attachment['data'];
-    expect(str_starts_with($csv, "\xEF\xBB\xBF"))->toBeTrue();
+    expect(str_starts_with((string) $csv, "\xEF\xBB\xBF"))->toBeTrue();
 
-    $csvNoBom = mb_substr($csv, 1);
+    $csvNoBom = mb_substr((string) $csv, 1);
     // Only header and trailing newline
     expect($csvNoBom)->toBe("name;email;cpf;city;state;errors\n");
 });
@@ -138,8 +138,8 @@ it('handles non-array payloads, missing errors, and JSON-encodes complex values'
     $attachment = $mail->rawAttachments[0];
     $csv = $attachment['data'];
 
-    expect(str_starts_with($csv, "\xEF\xBB\xBF"))->toBeTrue();
-    $csvNoBom = mb_substr($csv, 1);
+    expect(str_starts_with((string) $csv, "\xEF\xBB\xBF"))->toBeTrue();
+    $csvNoBom = mb_substr((string) $csv, 1);
 
     $normalized = mb_rtrim($csvNoBom, "\r\n");
     $lines = array_values(array_filter(preg_split("/\r\n|\n|\r/", $normalized)));

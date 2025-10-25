@@ -30,8 +30,8 @@ final class Employee extends Model
     public function cpf(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => format_cpf($value),
-            set: fn ($value) => only_numbers($value),
+            get: format_cpf(...),
+            set: only_numbers(...),
         );
     }
 }

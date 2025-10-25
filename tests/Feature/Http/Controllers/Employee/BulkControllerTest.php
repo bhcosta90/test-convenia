@@ -31,36 +31,34 @@ beforeEach(function (): void {
     };
 
     // Factory for a chainable Bus::batch() fake using an anonymous class
-    $this->makeChainBatchFake = function (string $id, bool $captureThen = false): object {
-        return new class($id, $captureThen)
+    $this->makeChainBatchFake = (fn (string $id, bool $captureThen = false): object => new class($id, $captureThen)
+    {
+        public ?Closure $captured = null;
+
+        public function __construct(public string $id, private readonly bool $captureThen = false) {}
+
+        public function then(Closure $cb): self
         {
-            public ?Closure $captured = null;
-
-            public function __construct(public string $id, private bool $captureThen = false) {}
-
-            public function then(Closure $cb): self
-            {
-                if ($this->captureThen) {
-                    $this->captured = $cb;
-                }
-
-                return $this;
+            if ($this->captureThen) {
+                $this->captured = $cb;
             }
 
-            public function dispatch(): object
+            return $this;
+        }
+
+        public function dispatch(): object
+        {
+            return new class($this->id)
             {
-                return new class($this->id)
-                {
-                    public function __construct(public string $id) {}
-                };
-            }
-        };
-    };
+                public function __construct(public string $id) {}
+            };
+        }
+    });
 
     $this->expectBusBatchReturning = function ($chainFake): void {
         Bus::shouldReceive('batch')
             ->once()
-            ->with(Mockery::on(fn ($jobs) => is_array($jobs) && count($jobs) === 1 && $jobs[0] instanceof BulkStoreJob))
+            ->with(Mockery::on(fn ($jobs): bool => is_array($jobs) && count($jobs) === 1 && $jobs[0] instanceof BulkStoreJob))
             ->andReturn($chainFake);
     };
 });
