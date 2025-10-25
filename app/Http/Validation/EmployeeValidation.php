@@ -42,7 +42,7 @@ final readonly class EmployeeValidation
                 'string',
                 'min:1',
                 new CpfRule(),
-                new CpfUniqueRule(new Employee(), $id),
+                new CpfUniqueRule($this->user, new Employee(), $id),
             ],
             'city' => [
                 new RequiredIf(! $id),
