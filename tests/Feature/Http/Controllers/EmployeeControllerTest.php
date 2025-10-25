@@ -124,7 +124,7 @@ it('enforces unique email and cpf per user on store but allows duplicates across
     $this->postJson('/api/employees', ($this->validEmployeePayload)([
         'email' => 'dup@example.com',
         'cpf' => format_cpf('52998224725'),
-    ]))->assertUnprocessable();
+    ]))->assertCreated();
 });
 
 // SHOW
