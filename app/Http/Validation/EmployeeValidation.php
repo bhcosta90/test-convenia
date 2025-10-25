@@ -18,7 +18,7 @@ final readonly class EmployeeValidation
         //
     }
 
-    public function make(?int $id): array
+    public function make(?int $id = null): array
     {
         return [
             'name' => [

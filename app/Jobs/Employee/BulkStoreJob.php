@@ -18,7 +18,10 @@ final class BulkStoreJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(protected readonly string $file) {}
+    public function __construct(
+        protected readonly int $userId,
+        protected readonly string $file
+    ) {}
 
     public function handle(): void
     {
@@ -32,7 +35,7 @@ final class BulkStoreJob implements ShouldQueue
                 return;
             }
 
-            $firstLine = fgets($handle);
+            $firstLine = fgets($handle); // lê header apenas para detectar delimitador
             if (! $firstLine) {
                 return;
             }
@@ -40,9 +43,7 @@ final class BulkStoreJob implements ShouldQueue
             // Detecta delimitador
             $delimiter = str_contains($firstLine, ';') ? ';' : ',';
 
-            // Retorna a primeira linha processada
-            yield str_getcsv($firstLine, $delimiter, '"', '\\');
-
+            // NÃO yield o header
             while (($line = fgets($handle)) !== false) {
                 $line = mb_trim($line);
                 if ($line === '') {
@@ -56,7 +57,7 @@ final class BulkStoreJob implements ShouldQueue
         });
 
         $lines->chunk(50)->each(function (LazyCollection $chunk) {
-            $jobs = $chunk->map(fn ($line) => new RegisterEmployeeJob($line))->all();
+            $jobs = $chunk->map(fn ($line) => new RegisterEmployeeJob($this->userId, $line))->all();
             $this->batch()->add($jobs);
         });
 

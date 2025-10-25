@@ -26,11 +26,11 @@ final class EmployeeController
         return EmployeeResource::collection($user->employees()->simplePaginate());
     }
 
-    public function store(Requests\EmployeeRequest $request, #[CurrentUser] User $user): EmployeeResource
+    public function store(Requests\EmployeeRequest $request): EmployeeResource
     {
         $this->authorize('create', Employee::class);
 
-        return new EmployeeResource($user->employees()->create($request->validated()));
+        return new EmployeeResource($request->user()->employees()->create($request->validated()));
     }
 
     public function show(Employee $employee): EmployeeResource
@@ -63,7 +63,7 @@ final class EmployeeController
         $path = $request->file('file')->store('tmp');
 
         $batch = Bus::batch([
-            new BulkStoreJob($path),
+            new BulkStoreJob($request->user()->id, $path),
         ])->dispatch();
 
         return response()->json([
