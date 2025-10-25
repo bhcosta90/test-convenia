@@ -13,8 +13,8 @@ final class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = text('Enter user email: ');
-        $name = text('Enter user name: ');
+        $email = text('Enter user email: ', default: 'test@example.com');
+        $name = text('Enter user name: ', default: 'Text Example');
         $password = text('Enter user password (default is "password"): ', default: 'password');
 
         User::create([
