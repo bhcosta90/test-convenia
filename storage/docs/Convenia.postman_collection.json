@@ -352,7 +352,8 @@
 								{
 									"key": "name",
 									"value": "Bruno Henrique da Costa",
-									"type": "text"
+									"type": "text",
+									"disabled": true
 								},
 								{
 									"key": "email",
@@ -381,14 +382,20 @@
 							]
 						},
 						"url": {
-							"raw": "{{host}}/api/employees/209",
+							"raw": "{{host}}/api/employees/:id",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
 								"employees",
-								"209"
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
 							]
 						}
 					},
@@ -420,14 +427,20 @@
 							"urlencoded": []
 						},
 						"url": {
-							"raw": "{{host}}/api/employees/3",
+							"raw": "{{host}}/api/employees/:id",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
 								"employees",
-								"3"
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
 							]
 						}
 					},
