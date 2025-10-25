@@ -29,7 +29,7 @@ beforeEach(function (): void {
 
     $this->refresh = function (string $token) {
         return $this->postJson('/api/auth/refresh', [
-            'token' => $token,
+            'refresh_token' => $token,
         ]);
     };
 
