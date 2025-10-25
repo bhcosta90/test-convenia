@@ -18,6 +18,7 @@ final class AuthController
         $device = $request->device_name;
 
         $expiredToken = $this->accessTokenTtlSeconds();
+        $refreshTtlMinutes = $this->refreshTokenTtlMinutes();
         $expiredRefreshToken = $this->refreshTokenTtlSeconds();
 
         try {
@@ -36,7 +37,7 @@ final class AuthController
             $refreshToken = $this->makeRefreshToken([
                 'device' => $device,
                 'type' => 'refresh',
-            ], $expiredRefreshToken);
+            ], $refreshTtlMinutes);
         } catch (JWTException) {
             return response()->json([
                 'message' => __('Unable to create tokens.'),
@@ -91,18 +92,26 @@ final class AuthController
 
     private function accessTokenTtlSeconds(): int
     {
-        return JWTAuth::factory()->getTTL() * 60;
+        // Use configured TTL in minutes to avoid side effects from factory TTL mutations
+        return (int) config('jwt.ttl') * 60;
+    }
+
+    private function refreshTokenTtlMinutes(): int
+    {
+        // Refresh token lasts 7 days based on the base TTL (in minutes)
+        return (int) config('jwt.ttl') * 24 * 7;
     }
 
     private function refreshTokenTtlSeconds(): int
     {
-        return JWTAuth::factory()->getTTL() * 60 * 24 * 7;
+        return $this->refreshTokenTtlMinutes() * 60;
     }
 
-    private function makeRefreshToken(array $claims, int $ttl): string
+    private function makeRefreshToken(array $claims, int $ttlMinutes): string
     {
+        // setTTL expects minutes; do not pass seconds.
         $refreshPayload = JWTFactory::customClaims($claims)
-            ->setTTL($ttl) // 7 days
+            ->setTTL($ttlMinutes)
             ->make();
 
         return JWTAuth::encode($refreshPayload)->get();

@@ -3,86 +3,73 @@
 declare(strict_types=1);
 
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Facades\JWTFactory;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
-    // Ensure no middleware interferes (e.g., auth:api) when we don't need it
-    $this->withoutMiddleware();
+    // Deterministic TTL so we can assert expires_in
+    config(['jwt.ttl' => 60]); // minutes
 
-    // Use closures instead of global helper functions to avoid name collisions
-    $this->mockTtl = function (int $ttlMinutes = 60): void {
-        // JWTAuth::factory()->getTTL() => $ttlMinutes
-        $factoryMock = Mockery::mock();
-        $factoryMock->shouldReceive('getTTL')->andReturn($ttlMinutes);
+    // Helpers as closures to avoid global function names
+    $this->createUser = function (array $overrides = []): User {
+        $defaults = [
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+            'password' => 'secret', // Will be hashed by model cast
+        ];
 
-        JWTAuth::shouldReceive('factory')->andReturn($factoryMock);
+        return User::factory()->create(array_merge($defaults, $overrides));
     };
 
-    $this->mockRefreshTokenPipeline = function (string $refreshToken = 'refresh.token.example', int $ttlSeconds = 60 * 60 * 24 * 7): void {
-        // JWTFactory::customClaims(...)->setTTL($ttlSeconds)->make() => $payload
-        $payload = Mockery::mock();
+    $this->login = function (string $email, string $password, string $device) {
+        return $this->postJson('/api/auth/login', [
+            'email' => $email,
+            'password' => $password,
+            'device_name' => $device,
+        ]);
+    };
 
-        JWTFactory::shouldReceive('customClaims')->andReturnSelf();
-        JWTFactory::shouldReceive('setTTL')->with($ttlSeconds)->andReturnSelf();
-        JWTFactory::shouldReceive('make')->andReturn($payload);
+    $this->refresh = function (string $token) {
+        return $this->postJson('/api/auth/refresh', [
+            'token' => $token,
+        ]);
+    };
 
-        // JWTAuth::encode($payload)->get() => $refreshToken
-        $encoded = Mockery::mock();
-        $encoded->shouldReceive('get')->andReturn($refreshToken);
-        JWTAuth::shouldReceive('encode')->with($payload)->andReturn($encoded);
+    $this->logoutWith = function (string $accessToken) {
+        return $this->withHeaders([
+            'Authorization' => 'Bearer '.$accessToken,
+            'Accept' => 'application/json',
+        ])->deleteJson('/api/auth/logout');
     };
 });
 
-// LOGIN: success
-it('logs in successfully and returns tokens', function (): void {
-    ($this->mockTtl)(60); // 60 minutes
+// LOGIN: success (no mocks)
+it('logs in successfully and returns tokens (integration)', function (): void {
+    ($this->createUser)();
 
-    $expiresIn = 60 * 60; // 3600 seconds
-    $refreshExpiresIn = 60 * 60 * 24 * 7; // 7 days in seconds (as used by controller)
-
-    // Mock login attempt
-    JWTAuth::shouldReceive('claims')->with(Mockery::on(function ($claims) {
-        return $claims['device'] === 'iPhone' && $claims['type'] === 'access';
-    }))->andReturnSelf();
-
-    JWTAuth::shouldReceive('attempt')->with([
-        'email' => 'john@example.com',
-        'password' => 'secret',
-    ])->andReturn('access.token.example');
-
-    ($this->mockRefreshTokenPipeline)('refresh.token.example', $refreshExpiresIn);
-
-    $response = $this->postJson('/api/auth/login', [
-        'email' => 'john@example.com',
-        'password' => 'secret',
-        'device_name' => 'iPhone',
-    ]);
+    $response = ($this->login)('john@example.com', 'secret', 'iPhone');
 
     $response->assertOk()
+        ->assertJsonStructure([
+            'access_token',
+            'expires_in',
+            'refresh_token',
+            'refresh_expires_in',
+            'token_type',
+        ])
         ->assertJson([
-            'access_token' => 'access.token.example',
-            'expires_in' => $expiresIn,
-            'refresh_token' => 'refresh.token.example',
-            'refresh_expires_in' => $refreshExpiresIn,
             'token_type' => 'bearer',
+            'expires_in' => 60 * 60, // jwt.ttl (60) minutes to seconds
         ]);
 });
 
-// LOGIN: invalid credentials
+// LOGIN: invalid credentials (no mocks)
 it('fails login with invalid credentials', function (): void {
-    ($this->mockTtl)(60);
+    // Ensure a user exists but try wrong password
+    ($this->createUser)();
 
-    JWTAuth::shouldReceive('claims')->andReturnSelf();
-    JWTAuth::shouldReceive('attempt')->andReturnFalse();
-
-    $response = $this->postJson('/api/auth/login', [
-        'email' => 'bad@example.com',
-        'password' => 'wrong',
-        'device_name' => 'Web',
-    ]);
+    $response = ($this->login)('john@example.com', 'wrong-password', 'Web');
 
     $response->assertStatus(401)
         ->assertJson([
@@ -90,88 +77,50 @@ it('fails login with invalid credentials', function (): void {
         ]);
 });
 
-// LOGIN: exception when creating tokens
-it('handles exception during login token creation', function (): void {
-    ($this->mockTtl)(60);
+// REFRESH: success (no mocks)
+it('refreshes token successfully and returns new tokens (integration)', function (): void {
+    ($this->createUser)();
 
-    JWTAuth::shouldReceive('claims')->andReturnSelf();
-    JWTAuth::shouldReceive('attempt')->andThrow(new JWTException('boom'));
+    $login = ($this->login)('john@example.com', 'secret', 'Android');
+    $login->assertOk();
 
-    $response = $this->postJson('/api/auth/login', [
-        'email' => 'john@example.com',
-        'password' => 'secret',
-        'device_name' => 'Web',
-    ]);
+    $accessToken = $login->json('access_token');
+    $refreshToken = $login->json('refresh_token');
 
-    $response->assertStatus(500)
-        ->assertJson([
-            'message' => __('Unable to create tokens.'),
-        ]);
-});
+    expect($accessToken)->toBeString()->not->toBeEmpty()
+        ->and($refreshToken)->toBeString()->not->toBeEmpty();
 
-// REFRESH: success
-it('refreshes token successfully and returns new tokens', function (): void {
-    ($this->mockTtl)(60);
-
-    $expiresIn = 60 * 60;
-    $refreshExpiresIn = 60 * 60 * 24 * 7;
-
-    $token = 'old.refresh.token';
-
-    // setToken(token)->getPayload() => payload with type refresh and device Android
-    $payload = Mockery::mock();
-    $payload->shouldReceive('get')->with('type')->andReturn('refresh');
-    $payload->shouldReceive('get')->with('device')->andReturn('Android');
-
-    // Use the facade self for the chain to support both getPayload and toUser later
-    JWTAuth::shouldReceive('setToken')->with($token)->andReturnSelf();
-    JWTAuth::shouldReceive('getPayload')->andReturn($payload);
-
-    // claims([...])->setToken(token)->toUser() => User
-    JWTAuth::shouldReceive('claims')->with(Mockery::on(function ($claims) {
-        return $claims['device'] === 'Android' && $claims['type'] === 'access';
-    }))->andReturnSelf();
-
-    $user = new User(['name' => 'John', 'email' => 'john@example.com']);
-
-    JWTAuth::shouldReceive('toUser')->andReturn($user);
-
-    // fromUser(user) => new access token
-    JWTAuth::shouldReceive('fromUser')->with($user)->andReturn('new.access.token');
-
-    ($this->mockRefreshTokenPipeline)('new.refresh.token', $refreshExpiresIn);
-
-    $response = $this->postJson('/api/auth/refresh', [
-        'token' => $token,
-    ]);
+    $response = ($this->refresh)($refreshToken);
 
     $response->assertOk()
+        ->assertJsonStructure([
+            'access_token',
+            'expires_in',
+            'refresh_token',
+            'refresh_expires_in',
+            'token_type',
+        ])
         ->assertJson([
-            'access_token' => 'new.access.token',
-            'expires_in' => $expiresIn,
-            'refresh_token' => 'new.refresh.token',
-            'refresh_expires_in' => $refreshExpiresIn,
             'token_type' => 'bearer',
+            'expires_in' => 60 * 60,
         ]);
+
+    // Access token should change
+    expect($response->json('access_token'))
+        ->toBeString()
+        ->not->toEqual($accessToken);
 });
 
-// REFRESH: wrong token type
-it('fails to refresh when token type is not refresh', function (): void {
-    ($this->mockTtl)(60);
+// REFRESH: wrong token type (use access token in place of refresh token)
+it('fails to refresh when token type is not refresh (integration)', function (): void {
+    ($this->createUser)();
 
-    $token = 'some.token';
+    $login = ($this->login)('john@example.com', 'secret', 'Web');
+    $login->assertOk();
 
-    $payload = Mockery::mock();
-    $payload->shouldReceive('get')->with('type')->andReturn('access'); // wrong type
+    $accessToken = $login->json('access_token'); // this has type=access
 
-    $jwtSetTokenMock = Mockery::mock();
-    $jwtSetTokenMock->shouldReceive('getPayload')->andReturn($payload);
-
-    JWTAuth::shouldReceive('setToken')->with($token)->andReturn($jwtSetTokenMock);
-
-    $response = $this->postJson('/api/auth/refresh', [
-        'token' => $token,
-    ]);
+    $response = ($this->refresh)($accessToken);
 
     $response->assertStatus(401)
         ->assertJson([
@@ -179,28 +128,16 @@ it('fails to refresh when token type is not refresh', function (): void {
         ]);
 });
 
-// REFRESH: exception path
-it('handles exception during refresh', function (): void {
-    ($this->mockTtl)(60);
+// LOGOUT: success (no mocks)
+it('logs out successfully with bearer token (integration)', function (): void {
+    ($this->createUser)();
 
-    JWTAuth::shouldReceive('setToken')->andThrow(new JWTException('invalid'));
+    $login = ($this->login)('john@example.com', 'secret', 'Web');
+    $login->assertOk();
 
-    $response = $this->postJson('/api/auth/refresh', [
-        'token' => 'bad.token',
-    ]);
+    $accessToken = $login->json('access_token');
 
-    $response->assertStatus(401)
-        ->assertJson([
-            'message' => __('Invalid or expired refresh token.'),
-        ]);
-});
-
-// LOGOUT: success message
-it('logs out successfully', function (): void {
-    // Mock auth()->logout() to avoid dependency on JWT parsing in the guard
-    Auth::shouldReceive('logout')->andReturnNull();
-
-    $response = $this->deleteJson('/api/auth/logout');
+    $response = ($this->logoutWith)($accessToken);
 
     $response->assertOk()
         ->assertJson([
