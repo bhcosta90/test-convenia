@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Bus;
 
 beforeEach(function (): void {
     // Helper: create a real batch and attach to the job
-    $this->dispatchWithBatch = function (RegisterEmployeeJob $job) {
+    $this->dispatchWithBatch = function (RegisterEmployeeJob $job): RegisterEmployeeJob {
         $batch = Bus::batch([])->name('register-employee')->dispatch();
         $job->withBatchId($batch->id);
 

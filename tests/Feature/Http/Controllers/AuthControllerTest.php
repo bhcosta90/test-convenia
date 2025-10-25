@@ -19,26 +19,20 @@ beforeEach(function (): void {
         return User::factory()->create(array_merge($defaults, $overrides));
     };
 
-    $this->login = function (string $email, string $password, string $device) {
-        return $this->postJson('/api/auth/login', [
-            'email' => $email,
-            'password' => $password,
-            'device_name' => $device,
-        ]);
-    };
+    $this->login = (fn (string $email, string $password, string $device) => $this->postJson('/api/auth/login', [
+        'email' => $email,
+        'password' => $password,
+        'device_name' => $device,
+    ]));
 
-    $this->refresh = function (string $token) {
-        return $this->postJson('/api/auth/refresh', [
-            'refresh_token' => $token,
-        ]);
-    };
+    $this->refresh = (fn (string $token) => $this->postJson('/api/auth/refresh', [
+        'refresh_token' => $token,
+    ]));
 
-    $this->logoutWith = function (string $accessToken) {
-        return $this->withHeaders([
-            'Authorization' => 'Bearer '.$accessToken,
-            'Accept' => 'application/json',
-        ])->deleteJson('/api/auth/logout');
-    };
+    $this->logoutWith = (fn (string $accessToken) => $this->withHeaders([
+        'Authorization' => 'Bearer '.$accessToken,
+        'Accept' => 'application/json',
+    ])->deleteJson('/api/auth/logout'));
 });
 
 // LOGIN: success (no mocks)
