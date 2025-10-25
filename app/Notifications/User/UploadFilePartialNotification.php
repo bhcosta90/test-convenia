@@ -103,7 +103,7 @@ final class UploadFilePartialNotification extends Notification
                         }
                     };
                     $iterator($item['errors']);
-                    $err = implode(';', $flat);
+                    $err = implode('|', $flat);
                 } else {
                     $err = (string) $item['errors'];
                 }
