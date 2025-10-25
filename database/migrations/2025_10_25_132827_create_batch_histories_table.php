@@ -13,6 +13,7 @@ return new class extends Migration
         Schema::create('batch_histories', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('batch_id');
+            $table->string('type')->index();
             $table->foreignId('user_id')->constrained('users');
             $table->json('data')->nullable();
             $table->timestamps();
