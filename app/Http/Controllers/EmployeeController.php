@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\EmployeeRequest;
+use App\Http\Requests;
 use App\Http\Resources\EmployeeResource;
+use App\Jobs\Employee\BulkStoreJob;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Bus;
 
 final class EmployeeController
 {
@@ -24,7 +26,7 @@ final class EmployeeController
         return EmployeeResource::collection($user->employees()->simplePaginate());
     }
 
-    public function store(EmployeeRequest $request, #[CurrentUser] User $user): EmployeeResource
+    public function store(Requests\EmployeeRequest $request, #[CurrentUser] User $user): EmployeeResource
     {
         $this->authorize('create', Employee::class);
 
@@ -38,7 +40,7 @@ final class EmployeeController
         return new EmployeeResource($employee);
     }
 
-    public function update(EmployeeRequest $request, Employee $employee): EmployeeResource
+    public function update(Requests\EmployeeRequest $request, Employee $employee): EmployeeResource
     {
         $this->authorize('update', $employee);
 
@@ -54,5 +56,18 @@ final class EmployeeController
         $employee->delete();
 
         return response()->json();
+    }
+
+    public function bulkStore(Requests\Employee\BulkStoreRequest $request): JsonResponse
+    {
+        $path = $request->file('file')->store('tmp');
+
+        $batch = Bus::batch([
+            new BulkStoreJob($path),
+        ])->dispatch();
+
+        return response()->json([
+            'message' => __('Bulk store send successfully with id: :id.', ['id' => $batch->id]),
+        ]);
     }
 }
