@@ -8,7 +8,8 @@ use App\Enums\BatchEnum;
 use App\Http\Requests\Employee\BulkStoreRequest;
 use App\Http\Resources\BatchHistoryResource;
 use App\Jobs\Employee\BulkStoreJob;
-use App\Notifications;
+use App\Notifications\User\UploadFilePartialNotification;
+use App\Notifications\User\UploadFileSuccessNotification;
 use Illuminate\Bus\Batch;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
@@ -28,16 +29,14 @@ final class BulkController
     public function store(BulkStoreRequest $request): JsonResponse
     {
         $path = $request->file('file')->store('tmp');
-        $request->user()->batch()->where('type', BatchEnum::EMPLOYEE_BULK_STORE)->delete();
+        ($user = $request->user())->batch()->where('type', BatchEnum::EMPLOYEE_BULK_STORE)->delete();
 
         $batch = Bus::batch([
-            new BulkStoreJob($request->user()->id, $path),
+            new BulkStoreJob($user->id, $path),
         ])
-            ->then(fn (Batch $batch) => $request->user()->notify(
-                $request->user()->batch()->where('type', BatchEnum::EMPLOYEE_BULK_STORE)->count()
-                    ? new Notifications\User\UploadFilePartialNotification($batch->id)
-                    : new Notifications\User\UploadFileSuccessNotification()
-            ))
+            ->then(fn (Batch $batch) => $user->notify($user->batch()->where('type', BatchEnum::EMPLOYEE_BULK_STORE)->count()
+                ? new UploadFilePartialNotification($batch->id)
+                : new UploadFileSuccessNotification()))
             ->dispatch();
 
         return response()->json([
