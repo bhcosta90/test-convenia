@@ -208,4 +208,5 @@ This will clear config cache and run the test suite (Pest).
   - Configure your mail transport in `.env` to receive success/partial result emails.
 
 ## License
-This project is licensed under the MIT License. See the `LICENSE` file if present.
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
