@@ -75,9 +75,10 @@
         ],
         "test:coverage": [
             "@php artisan config:clear --ansi",
-            "@php artisan test --coverage --min=100"
+            "@php artisan test --parallel --coverage --min=100"
         ],
         "lint": [
+            "./vendor/bin/rector",
             "./vendor/bin/pint --test"
         ],
         "format": [
