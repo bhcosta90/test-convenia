@@ -2,12 +2,24 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "laravel/laravel",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Employee management REST API with per-user scoping, CSV bulk import, JWT auth, Swagger docs, and queue-based notifications.",
     "keywords": [
         "laravel",
-        "framework"
+        "api",
+        "employees",
+        "csv",
+        "jwt",
+        "openapi",
+        "swagger"
     ],
     "license": "MIT",
+    "authors": [
+        {
+            "name": "Bruno Henrique da Costa",
+            "email": "bhcosta90@gmail.com",
+            "role": "Maintainer"
+        }
+    ],
     "require": {
         "php": "^8.3",
         "dedoc/scramble": "^0.13.0",
@@ -60,6 +72,13 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
+        ],
+        "test:coverage": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --coverage --min=100"
+        ],
+        "lint": [
+            "./vendor/bin/pint --test"
         ],
         "format": [
             "./vendor/bin/rector",
