@@ -78,7 +78,7 @@
             "@php artisan test --parallel --coverage --min=100"
         ],
         "lint": [
-            "./vendor/bin/rector",
+            "./vendor/bin/rector --dry-run",
             "./vendor/bin/pint --test"
         ],
         "format": [

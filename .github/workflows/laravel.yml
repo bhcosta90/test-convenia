@@ -28,8 +28,10 @@ jobs:
       run: |
         mkdir -p database
         touch database/database.sqlite
+    - name: Execute lint
+      run: composer run lint
     - name: Execute tests (Unit and Feature tests) via PHPUnit/Pest
       env:
         DB_CONNECTION: sqlite
         DB_DATABASE: database/database.sqlite
-      run: php artisan test --coverage --min=100
+      run: composer run test:coverage
