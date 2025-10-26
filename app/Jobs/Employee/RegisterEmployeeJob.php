@@ -24,7 +24,7 @@ final class RegisterEmployeeJob implements ShouldQueue
         private readonly int $userId,
         private readonly array $data
     ) {
-        $this->delay(app()->isLocal() ? 0 : rand(5, 120));
+        $this->delay(app()->isLocal() ? 0 : random_int(5, 120));
     }
 
     public function handle(): void

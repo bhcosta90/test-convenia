@@ -42,7 +42,7 @@ final class EmployeeListCache
                 $keys[] = $key;
                 Cache::put($registryKey, $keys, $ttl);
             }
-        } catch (Throwable $e) {
+        } catch (Throwable) {
             // best-effort tracking; ignore failures
         }
 

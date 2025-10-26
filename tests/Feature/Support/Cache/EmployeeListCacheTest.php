@@ -5,23 +5,23 @@ declare(strict_types=1);
 use App\Support\Cache\EmployeeListCache;
 use Illuminate\Support\Facades\Cache;
 
-beforeEach(function () {
+beforeEach(function (): void {
     Cache::flush();
 });
 
-it('builds deterministic keys per user and page', function () {
+it('builds deterministic keys per user and page', function (): void {
     expect(EmployeeListCache::key(10, 1))->toBe('employees:list:10:page:1')
         ->and(EmployeeListCache::key(10, 2))->toBe('employees:list:10:page:2')
         ->and(EmployeeListCache::key(11, 1))->toBe('employees:list:11:page:1');
 });
 
-it('remembers computed value and returns cached value on subsequent calls', function () {
+it('remembers computed value and returns cached value on subsequent calls', function (): void {
     $userId = 42;
     $page = 3;
     $key = EmployeeListCache::key($userId, $page);
 
     $calls = 0;
-    $value1 = EmployeeListCache::remember($userId, $page, function () use (&$calls) {
+    $value1 = EmployeeListCache::remember($userId, $page, function () use (&$calls): array {
         $calls++;
 
         return ['from' => 'compute', 'time' => now()->timestamp];
@@ -32,7 +32,7 @@ it('remembers computed value and returns cached value on subsequent calls', func
         ->and(Cache::has($key))->toBeTrue();
 
     // Second call should use cache, not recompute
-    $value2 = EmployeeListCache::remember($userId, $page, function () use (&$calls) {
+    $value2 = EmployeeListCache::remember($userId, $page, function () use (&$calls): array {
         $calls++;
 
         return ['from' => 'compute-again'];
@@ -42,12 +42,12 @@ it('remembers computed value and returns cached value on subsequent calls', func
         ->and($value2)->toBe($value1); // exact same payload
 });
 
-it('tracks keys in a per-user registry so we can invalidate them later', function () {
+it('tracks keys in a per-user registry so we can invalidate them later', function (): void {
     $userId = 7;
 
     // generate 2 different pages
-    EmployeeListCache::remember($userId, 1, fn () => ['p' => 1]);
-    EmployeeListCache::remember($userId, 2, fn () => ['p' => 2]);
+    EmployeeListCache::remember($userId, 1, fn (): array => ['p' => 1]);
+    EmployeeListCache::remember($userId, 2, fn (): array => ['p' => 2]);
 
     $registryKey = 'employees:list:'.$userId.':keys';
     $keys = Cache::get($registryKey);
@@ -57,12 +57,12 @@ it('tracks keys in a per-user registry so we can invalidate them later', functio
         ->and($keys)->toContain(EmployeeListCache::key($userId, 2));
 });
 
-it('invalidateForUserId forgets all cached pages for that user and clears registry', function () {
+it('invalidateForUserId forgets all cached pages for that user and clears registry', function (): void {
     $userId = 55;
 
     // Arrange cached pages
-    EmployeeListCache::remember($userId, 1, fn () => ['data' => 'p1']);
-    EmployeeListCache::remember($userId, 2, fn () => ['data' => 'p2']);
+    EmployeeListCache::remember($userId, 1, fn (): array => ['data' => 'p1']);
+    EmployeeListCache::remember($userId, 2, fn (): array => ['data' => 'p2']);
 
     $key1 = EmployeeListCache::key($userId, 1);
     $key2 = EmployeeListCache::key($userId, 2);
@@ -81,12 +81,12 @@ it('invalidateForUserId forgets all cached pages for that user and clears regist
         ->and(Cache::has($registryKey))->toBeFalse();
 });
 
-it('does not affect other users cache when invalidating a specific user', function () {
+it('does not affect other users cache when invalidating a specific user', function (): void {
     $userA = 1;
     $userB = 2;
-    EmployeeListCache::remember($userA, 1, fn () => ['A1']);
-    EmployeeListCache::remember($userA, 2, fn () => ['A2']);
-    EmployeeListCache::remember($userB, 1, fn () => ['B1']);
+    EmployeeListCache::remember($userA, 1, fn (): array => ['A1']);
+    EmployeeListCache::remember($userA, 2, fn (): array => ['A2']);
+    EmployeeListCache::remember($userB, 1, fn (): array => ['B1']);
 
     $a1 = EmployeeListCache::key($userA, 1);
     $a2 = EmployeeListCache::key($userA, 2);
@@ -104,7 +104,7 @@ it('does not affect other users cache when invalidating a specific user', functi
         ->and(Cache::has($b1))->toBeTrue();
 });
 
-it('handles missing or malformed registry gracefully on invalidate', function () {
+it('handles missing or malformed registry gracefully on invalidate', function (): void {
     $userId = 999;
 
     // No registry created yet; should not throw and should be a no-op
@@ -118,7 +118,7 @@ it('handles missing or malformed registry gracefully on invalidate', function ()
     expect(Cache::has('employees:list:'.$userId.':keys'))->toBeFalse();
 });
 
-it('gracefully ignores exceptions during registry tracking in remember', function () {
+it('gracefully ignores exceptions during registry tracking in remember', function (): void {
     $userId = 123;
     $page = 1;
 
@@ -129,7 +129,7 @@ it('gracefully ignores exceptions during registry tracking in remember', functio
     // When tracking fails, we must NOT attempt to put the registry key
     $mock->shouldReceive('put')->never();
 
-    $value = EmployeeListCache::remember($userId, $page, fn () => ['ok' => true]);
+    $value = EmployeeListCache::remember($userId, $page, fn (): array => ['ok' => true]);
 
     expect($value)->toBe(['ok' => true]);
 });

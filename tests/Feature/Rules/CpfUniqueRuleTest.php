@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Rules\CpfUniqueRule;
 use Illuminate\Support\Facades\Validator;
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->validateCpf = function (User $user, string|Employee $table, mixed $cpf, ?int $ignoreId = null) {
         $rule = new CpfUniqueRule(user: $user, table: $table, ignoreId: $ignoreId);
 
@@ -18,14 +18,14 @@ beforeEach(function () {
     };
 });
 
-it('passes when there is no existing record for the user and CPF (table as string)', function () {
+it('passes when there is no existing record for the user and CPF (table as string)', function (): void {
     $user = User::factory()->create();
 
     $validator = ($this->validateCpf)($user, 'employees', '12345678901');
     expect($validator->passes())->toBeTrue();
 });
 
-it('fails when the same user has the same CPF (table as string)', function () {
+it('fails when the same user has the same CPF (table as string)', function (): void {
     $user = User::factory()->create();
     Employee::factory()->create([
         'user_id' => $user->id,
@@ -40,7 +40,7 @@ it('fails when the same user has the same CPF (table as string)', function () {
         ->toBe(trans('validation.unique', ['attribute' => 'cpf']));
 });
 
-it('fails when the same user has the same CPF (table as Model instance)', function () {
+it('fails when the same user has the same CPF (table as Model instance)', function (): void {
     $user = User::factory()->create();
     Employee::factory()->create([
         'user_id' => $user->id,
@@ -53,7 +53,7 @@ it('fails when the same user has the same CPF (table as Model instance)', functi
         ->and($validator->errors()->has('cpf'))->toBeTrue();
 });
 
-it('passes when same CPF exists but for a different user', function () {
+it('passes when same CPF exists but for a different user', function (): void {
     $userA = User::factory()->create();
     $userB = User::factory()->create();
 
@@ -67,7 +67,7 @@ it('passes when same CPF exists but for a different user', function () {
     expect($validator->passes())->toBeTrue();
 });
 
-it('passes when ignoring the current record id (update scenario)', function () {
+it('passes when ignoring the current record id (update scenario)', function (): void {
     $user = User::factory()->create();
     $employee = Employee::factory()->create([
         'user_id' => $user->id,
@@ -79,7 +79,7 @@ it('passes when ignoring the current record id (update scenario)', function () {
     expect($validator->passes())->toBeTrue();
 });
 
-it('fails when another record with same CPF exists and ignoreId targets a different id', function () {
+it('fails when another record with same CPF exists and ignoreId targets a different id', function (): void {
     $user = User::factory()->create();
     $employee1 = Employee::factory()->create([
         'user_id' => $user->id,
@@ -96,28 +96,28 @@ it('fails when another record with same CPF exists and ignoreId targets a differ
     expect($validator->fails())->toBeTrue();
 });
 
-it('passes when CPF is an empty string (early return; other rules should handle required)', function () {
+it('passes when CPF is an empty string (early return; other rules should handle required)', function (): void {
     $user = User::factory()->create();
 
     $validator = ($this->validateCpf)($user, 'employees', '');
     expect($validator->passes())->toBeTrue();
 });
 
-it('passes when CPF is null (early return)', function () {
+it('passes when CPF is null (early return)', function (): void {
     $user = User::factory()->create();
 
     $validator = ($this->validateCpf)($user, 'employees', null);
     expect($validator->passes())->toBeTrue();
 });
 
-it('passes when CPF contains only non-digits (e.g., only punctuation/whitespace)', function () {
+it('passes when CPF contains only non-digits (e.g., only punctuation/whitespace)', function (): void {
     $user = User::factory()->create();
 
     $validator = ($this->validateCpf)($user, 'employees', '..--  /  ');
     expect($validator->passes())->toBeTrue();
 });
 
-it('sanitizes formatted CPF and fails if a sanitized match exists', function () {
+it('sanitizes formatted CPF and fails if a sanitized match exists', function (): void {
     $user = User::factory()->create();
     Employee::factory()->create([
         'user_id' => $user->id,
@@ -130,7 +130,7 @@ it('sanitizes formatted CPF and fails if a sanitized match exists', function () 
     expect($validator->fails())->toBeTrue();
 });
 
-it('sanitizes formatted CPF and passes if there is no existing match', function () {
+it('sanitizes formatted CPF and passes if there is no existing match', function (): void {
     $user = User::factory()->create();
 
     $validator = ($this->validateCpf)($user, 'employees', '987.654.321-00');
