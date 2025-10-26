@@ -189,11 +189,6 @@ This will clear config cache and run the test suite (Pest).
 - JWT-style token auth
 - Queued jobs for CSV processing and email notifications
 
-
-## License
-This project is licensed under the MIT License. See the `LICENSE` file if present.
-
-
 ## Notes on Caching and Queues
 
 - Employees list caching
@@ -211,3 +206,6 @@ This project is licensed under the MIT License. See the `LICENSE` file if presen
     ```
 
   - Configure your mail transport in `.env` to receive success/partial result emails.
+
+## License
+This project is licensed under the MIT License. See the `LICENSE` file if present.
