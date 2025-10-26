@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Validation;
+namespace App\Validation;
 
 use App\Models\Employee;
 use App\Models\User;

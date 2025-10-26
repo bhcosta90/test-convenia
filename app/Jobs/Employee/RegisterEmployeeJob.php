@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Jobs\Employee;
 
 use App\Enums\BatchEnum;
-use App\Http\Validation\EmployeeValidation;
 use App\Models\User;
+use App\Validation\EmployeeValidation;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
