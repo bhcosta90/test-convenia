@@ -192,3 +192,22 @@ This will clear config cache and run the test suite (Pest).
 
 ## License
 This project is licensed under the MIT License. See the `LICENSE` file if present.
+
+
+## Notes on Caching and Queues
+
+- Employees list caching
+  - The `GET /employees` endpoint uses per-user, per-page caching to improve performance.
+  - Cache key format: `employees:list:{userId}:page:{page}`.
+  - TTL: configured by `config('cache.employee_list_ttl')` and overridable via env `CACHE_EMPLOYEE_LIST_TTL` (defaults to 300 seconds).
+  - Invalidation: any create, update, delete, restore, or force-delete of an employee automatically clears the cached pages for that user via an Eloquent observer. The next request will rebuild the cache.
+  - The JSON response shape remains exactly the same as the uncached response (resource-based serialization + pagination metadata).
+
+- Queue worker reminder for CSV imports
+  - CSV processing and notification emails run asynchronously. Ensure a queue worker is running during imports:
+
+    ```bash
+    php artisan queue:listen --tries=1
+    ```
+
+  - Configure your mail transport in `.env` to receive success/partial result emails.
