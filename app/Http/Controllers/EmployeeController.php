@@ -18,11 +18,13 @@ final class EmployeeController
 {
     use AuthorizesRequests;
 
-    public function index(#[CurrentUser] User $user): JsonResponse
+    public function index(Requests\Employee\IndexRequest $request): JsonResponse
     {
         $this->authorize('viewAny', Employee::class);
 
-        $page = (int) request()->query('page', 1);
+        $page = (int) $request->query('page', 1);
+
+        $user = $request->user();
 
         $payload = EmployeeListCache::remember($user->id, $page, function () use ($user) {
             $employees = $user->employees()
