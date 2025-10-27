@@ -71,6 +71,16 @@ This will:
 If you are using SQLite locally, a starter file may be created automatically. Confirm the path in `DB_DATABASE` points to an existing file (e.g., `database/database.sqlite`).
 
 
+## Seeding a User
+To create an initial user via database seeders, run:
+
+```bash
+php artisan db:seed
+```
+
+This will insert example data (including at least one user) so you can authenticate and start using the API.
+
+
 ## Running the App
 For a convenient local dev experience (HTTP server, queue listener, logs, and Vite), use the provided Composer script:
 
@@ -83,16 +93,6 @@ Alternatively, you can run components separately:
 - Queue listener: `php artisan queue:listen --tries=1`
 - Logs: `php artisan pail --timeout=0`
 - Vite dev: `npm run dev`
-
-
-## Seeding a User
-To create an initial user via database seeders, run:
-
-```bash
-php artisan db:seed
-```
-
-This will insert example data (including at least one user) so you can authenticate and start using the API.
 
 
 ## Authentication
