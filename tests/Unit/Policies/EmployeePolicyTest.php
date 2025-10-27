@@ -11,7 +11,6 @@ beforeEach(function (): void {
 
     $this->makeUser = function (int $id): User {
         $user = new User();
-        // We don't need DB, just set the in-memory id
         $user->id = $id;
 
         return $user;
