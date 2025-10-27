@@ -11,6 +11,7 @@ final class EmployeeRequest extends FormRequest
 {
     public function rules(): array
     {
+        /** @var EmployeeValidation $validation */
         $validation = app(EmployeeValidation::class);
 
         return $validation->make($this->route('employee'));
